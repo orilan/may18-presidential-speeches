@@ -1,0 +1,15 @@
+﻿regime,n_t2,direction,count,pct
+진보,8,general,2,25.0
+진보,8,state_to_victim,2,25.0
+진보,8,victim_to_perpetrator,4,50.0
+보수,4,general,1,25.0
+보수,4,victim_to_perpetrator,3,75.0
+전체,12,general,3,25.0
+전체,12,state_to_victim,2,16.7
+전체,12,victim_to_perpetrator,7,58.3
+김영삼(보수),4,general,1,25.0
+김영삼(보수),4,victim_to_perpetrator,3,75.0
+노무현(진보),1,general,1,100.0
+문재인(진보),7,general,1,14.3
+문재인(진보),7,state_to_victim,2,28.6
+문재인(진보),7,victim_to_perpetrator,4,57.1
