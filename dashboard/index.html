@@ -293,10 +293,15 @@ button.apply-btn:hover { opacity: 0.85; }
 
 <!-- ===================== TAB 4: 연설문 전문 ===================== -->
 <div class="tab-content" id="tab-t4">
-  <div class="speech-grid" id="speech-grid"></div>
-  <div id="speech-viewer" style="display:none">
+  <div class="filter-bar" style="margin-bottom:16px">
+    <div class="filter-group">
+      <label>연도 선택</label>
+      <select id="f4-year" style="font-size:14px;padding:6px 10px"></select>
+    </div>
+  </div>
+  <div id="speech-viewer">
     <div class="speech-meta" id="speech-meta"></div>
-    <div class="speech-dist" id="speech-dist"></div>
+    <div class="speech-dist" id="speech-dist" style="margin-bottom:10px"></div>
     <div class="speech-text" id="speech-text"></div>
   </div>
 </div>
@@ -541,18 +546,17 @@ function renderTab1() {
     }
   });
 
-  // Tense chart — use tense_dist for the selected scope
-  const tenseData = CORPUS.tense_dist.filter(r => r.group === 'THEME_전체' || r.group === 'THEME_진보' || r.group === 'THEME_보수');
-  const fLib = tenseData.filter(r => r.group==='THEME_진보');
-  const fCon = tenseData.filter(r => r.group==='THEME_보수');
-  const getTensePct = (rows, tense) => { const r = rows.find(x=>x.tense===tense); return r ? num(r.pct) : 0; };
+  // Tense chart — computed from filtered sentences (only THEME with tense set)
+  const libTenseSents = theme.filter(s => s.regime === '진보' && s.tense);
+  const conTenseSents = theme.filter(s => s.regime === '보수' && s.tense);
+  const lTTotal = libTenseSents.length, cTTotal = conTenseSents.length;
   makeChart('ch1-tense', {
     type:'bar',
     data: {
       labels: TENSES,
       datasets: [
-        {label:'진보', data: TENSES.map(tn=>getTensePct(fLib,tn)), backgroundColor: LIB_COLOR+'bb'},
-        {label:'보수', data: TENSES.map(tn=>getTensePct(fCon,tn)), backgroundColor: CON_COLOR+'bb'},
+        {label:'진보', data: TENSES.map(tn => pct(libTenseSents.filter(s=>s.tense===tn).length, lTTotal)), backgroundColor: LIB_COLOR+'bb'},
+        {label:'보수', data: TENSES.map(tn => pct(conTenseSents.filter(s=>s.tense===tn).length, cTTotal)), backgroundColor: CON_COLOR+'bb'},
       ]
     },
     options: {
@@ -677,26 +681,46 @@ document.getElementById('f2-theme').addEventListener('change', renderTab2);
 
 // ====================== TAB 3 ======================
 function renderTab3() {
+  // Compute from sentences (avoids encoding issues with pre-computed CSVs)
+  const allTheme = themeSentences(CORPUS.sentences);
+  const libSents = allTheme.filter(s => s.regime === '진보');
+  const conSents = allTheme.filter(s => s.regime === '보수');
+  const lTotal = libSents.length, cTotal = conSents.length;
+
+  const donutOpts = {
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {position:'right', labels:{font:{size:10}, boxWidth:10}},
+      tooltip: {callbacks:{label: ctx => `${ctx.label}: ${ctx.parsed}문장`}}
+    }
+  };
+
   // Lib donut
-  const libTheme = CORPUS.theme_dist.filter(r => r.regime==='진보');
   makeChart('ch3-lib-donut', {
     type:'doughnut',
     data: {
       labels: THEMES.map(t => t+' '+THEME_NAMES[t]),
-      datasets:[{data: THEMES.map(t=>{const r=libTheme.find(x=>x.theme===t);return r?num(r.count):0;}), backgroundColor:THEMES.map(t=>THEME_COLORS[t]), borderWidth:2, borderColor:'#1a1d2e'}]
+      datasets:[{
+        data: THEMES.map(t => libSents.filter(s=>s.pt===t).length),
+        backgroundColor: THEMES.map(t=>THEME_COLORS[t]),
+        borderWidth:2, borderColor:'#1a1d2e'
+      }]
     },
-    options:{maintainAspectRatio:false, plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}}
+    options: donutOpts
   });
 
   // Con donut
-  const conTheme = CORPUS.theme_dist.filter(r => r.regime==='보수');
   makeChart('ch3-con-donut', {
     type:'doughnut',
     data: {
       labels: THEMES.map(t => t+' '+THEME_NAMES[t]),
-      datasets:[{data: THEMES.map(t=>{const r=conTheme.find(x=>x.theme===t);return r?num(r.count):0;}), backgroundColor:THEMES.map(t=>THEME_COLORS[t]), borderWidth:2, borderColor:'#1a1d2e'}]
+      datasets:[{
+        data: THEMES.map(t => conSents.filter(s=>s.pt===t).length),
+        backgroundColor: THEMES.map(t=>THEME_COLORS[t]),
+        borderWidth:2, borderColor:'#1a1d2e'
+      }]
     },
-    options:{maintainAspectRatio:false, plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}}}}
+    options: donutOpts
   });
 
   // President stacked bar
@@ -723,8 +747,8 @@ function renderTab3() {
     data: {
       labels: PERIOD_STATS.map(p => p.name),
       datasets: [
-        {label:'T1 사죄·반성', data: PERIOD_STATS.map(p=>p.T1_pct), backgroundColor: THEME_COLORS.T1+'bb'},
-        {label:'T3 화해·통합', data: PERIOD_STATS.map(p=>p.T3_pct), backgroundColor: THEME_COLORS.T3+'bb'},
+        {label:'T1 사죄·반성',    data: PERIOD_STATS.map(p=>p.T1_pct), backgroundColor: THEME_COLORS.T1+'bb'},
+        {label:'T3 화해·통합',    data: PERIOD_STATS.map(p=>p.T3_pct), backgroundColor: THEME_COLORS.T3+'bb'},
         {label:'T4 정의·진상규명', data: PERIOD_STATS.map(p=>p.T4_pct), backgroundColor: THEME_COLORS.T4+'bb'},
       ]
     },
@@ -735,69 +759,58 @@ function renderTab3() {
     }
   });
 
-  // Tense by regime
-  const tenseRows = CORPUS.tense_dist.filter(r=>r.group==='THEME_진보'||r.group==='THEME_보수');
-  const libT = tenseRows.filter(r=>r.group==='THEME_진보');
-  const conT = tenseRows.filter(r=>r.group==='THEME_보수');
+  // Tense by regime — computed from sentences
+  const libT = libSents.filter(s=>s.tense), cTTotal = conSents.filter(s=>s.tense).length;
+  const conT = conSents.filter(s=>s.tense);
+  const lTTotal = libT.length;
   makeChart('ch3-tense', {
     type:'bar',
     data:{
-      labels:['과거','현재','미래'],
+      labels: TENSES,
       datasets:[
-        {label:'진보 %', data:TENSES.map(tn=>{const r=libT.find(x=>x.tense===tn);return r?num(r.pct):0;}), backgroundColor:LIB_COLOR+'bb'},
-        {label:'보수 %', data:TENSES.map(tn=>{const r=conT.find(x=>x.tense===tn);return r?num(r.pct):0;}), backgroundColor:CON_COLOR+'bb'},
+        {label:'진보 %', data: TENSES.map(tn => pct(libT.filter(s=>s.tense===tn).length, lTTotal)), backgroundColor:LIB_COLOR+'bb'},
+        {label:'보수 %', data: TENSES.map(tn => pct(conT.filter(s=>s.tense===tn).length, cTTotal)), backgroundColor:CON_COLOR+'bb'},
       ]
     },
-    options:{maintainAspectRatio:false,scales:{y:{max:60,ticks:{callback:v=>v+'%'}}},plugins:{legend:{position:'top'}}}
+    options:{maintainAspectRatio:false, scales:{y:{max:60,ticks:{callback:v=>v+'%'}}}, plugins:{legend:{position:'top'}}}
   });
 }
 
 // ====================== TAB 4 ======================
-let selectedSpeech = null;
 function renderTab4() {
-  const grid = document.getElementById('speech-grid');
-  const sorted = [...CORPUS.speeches].sort((a,b)=>a.year-b.year);
-  grid.innerHTML = sorted.map(sp => {
-    const regClass = sp.regime==='진보'?'lib':'con';
-    return `<button class="speech-btn" onclick="showSpeech(${sp.spid})" id="spbtn-${sp.spid}">
-      <div class="yr">${sp.year}</div>
-      <div class="spkr" style="margin-top:4px">${sp.speaker}</div>
-      <div style="margin-top:6px"><span class="badge-${regClass}">${sp.regime}</span></div>
-    </button>`;
+  const sorted = [...CORPUS.speeches].sort((a,b) => a.year - b.year);
+  const sel = document.getElementById('f4-year');
+  sel.innerHTML = sorted.map(sp => {
+    const label = `${sp.year}년 — ${sp.speaker} (${sp.regime})`;
+    return `<option value="${sp.spid}">${label}</option>`;
   }).join('');
+  sel.addEventListener('change', () => showSpeech(+sel.value));
+  // Auto-show first speech
+  if (sorted.length) showSpeech(sorted[0].spid);
 }
-window.showSpeech = function(spid) {
-  const sp = CORPUS.speeches.find(s=>s.spid==spid);
+
+function showSpeech(spid) {
+  const sp = CORPUS.speeches.find(s => s.spid === spid);
   if (!sp) return;
-  // Clear previous active
-  document.querySelectorAll('.speech-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('spbtn-'+spid)?.classList.add('active');
 
-  // Compute theme distribution for this speech
-  const sents = themeSentences(CORPUS.sentences.filter(s=>s.spid==spid));
+  // Theme distribution for this speech
+  const sents = themeSentences(CORPUS.sentences.filter(s => s.spid === spid));
   const total = sents.length;
-  const regClass = sp.regime==='진보'?'lib':'con';
+  const regClass = sp.regime === '진보' ? 'lib' : 'con';
 
-  const meta = document.getElementById('speech-meta');
-  meta.innerHTML = `
-    <span class="badge-${regClass}">${sp.regime}</span>
-    <strong>${sp.year}년</strong>
-    <span>${sp.speaker}</span>
-    <span style="color:var(--text-muted)">THEME ${total}문장</span>
-  `;
+  document.getElementById('speech-meta').innerHTML =
+    `<span class="badge-${regClass}">${sp.regime}</span>
+     <strong style="font-size:16px">${sp.year}년</strong>
+     <span>${sp.speaker}</span>
+     <span style="color:var(--text-muted)">전체 ${sp.sentence_count}문장 · THEME ${total}문장</span>`;
 
-  const dist = document.getElementById('speech-dist');
-  dist.innerHTML = THEMES.map(t => {
-    const cnt = sents.filter(s=>s.pt===t).length;
-    if (!cnt) return '';
-    return `<span class="tag tag-${t}">${t} ${THEME_NAMES[t]} ${cnt}</span>`;
+  document.getElementById('speech-dist').innerHTML = THEMES.map(t => {
+    const cnt = sents.filter(s => s.pt === t).length;
+    return cnt ? `<span class="tag tag-${t}">${t} ${THEME_NAMES[t]} ${cnt}</span>` : '';
   }).join('');
 
-  const textEl = document.getElementById('speech-text');
-  textEl.textContent = sp.text || '(전문 없음)';
-
-  document.getElementById('speech-viewer').style.display = 'block';
-};
+  document.getElementById('speech-text').textContent = sp.text || '(전문 없음)';
+}
 
 // ====================== TAB 5 ======================
 const CAT1_OPTS = {
