@@ -1,0 +1,9 @@
+corpus_data.json
+extract_data.sh
+extract_sentences.awk
+extract_speeches.awk
+extract_speeches2.awk
+extract_speeches3.awk
+build_json.sh
+build_html.sh
+template.html
