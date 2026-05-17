@@ -154,6 +154,11 @@ button.apply-btn:hover { opacity: 0.85; }
 .gen-slider-label { font-size:11px; color:var(--text-muted); width:120px; flex-shrink:0; line-height:1.3; }
 .gen-slider-val { font-size:11px; font-family:'DM Mono',monospace; width:36px; text-align:right; color:var(--text); }
 input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
+input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+.gen-sliders-locked .gen-slider-label { opacity:0.55; }
+.gen-mode-badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; margin-left:8px; font-weight:600; }
+.gen-mode-free { background:rgba(129,140,248,0.2); color:#818cf8; }
+.gen-mode-preset { background:rgba(52,211,153,0.15); color:#34d399; }
 .gen-match-item { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
 .gen-match-item:last-child { border-bottom:none; }
 .gen-match-rank { font-size:10px; font-family:'DM Mono',monospace; color:var(--text-muted); margin-right:4px; }
@@ -501,12 +506,17 @@ input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
     </div>
   </div>
 
-  <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
     <span style="font-size:11px;color:var(--text-muted);align-self:center;margin-right:4px">프리셋</span>
+    <button class="toggle-btn" id="gpreset-def" onclick="applyGenPreset('default')">전체 평균</button>
     <button class="toggle-btn" id="gpreset-lib" onclick="applyGenPreset('liberal')">진보형</button>
     <button class="toggle-btn" id="gpreset-con" onclick="applyGenPreset('conservative')">보수형</button>
     <button class="toggle-btn" id="gpreset-j"   onclick="applyGenPreset('justice')">이행기정의 강조</button>
-    <button class="toggle-btn" id="gpreset-def" onclick="applyGenPreset('default')">전체 평균</button>
+    <span style="width:1px;height:18px;background:rgba(255,255,255,0.15);display:inline-block;align-self:center"></span>
+    <button class="toggle-btn" id="gpreset-free" onclick="applyGenPreset('free')" style="border-color:rgba(129,140,248,0.5);color:#818cf8">자유 설정 ✎</button>
+  </div>
+  <div id="gen-mode-info" style="font-size:11px;color:var(--text-muted);margin-bottom:14px;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:3px solid var(--accent)">
+    <span id="gen-mode-desc">전체 평균 프리셋 — 슬라이더 고정 · 코퍼스 전체 평균 담론 구조 반영</span>
   </div>
 
   <div class="grid-2 mb-20">
@@ -582,9 +592,15 @@ input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
 
     <div class="card">
       <div class="section-title" style="margin-bottom:4px">유사 연설 매칭</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">슬라이더 조정 시 자동 갱신 · 상위 3개를 Few-shot 예시로 사용</div>
+      <div id="gen-match-desc" style="font-size:11px;color:var(--text-muted);margin-bottom:14px">상위 3개를 Few-shot 예시로 사용</div>
       <div id="gen-matches"><div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">조건을 설정하면<br>유사 연설이 표시됩니다</div></div>
     </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="gen-section-title" style="margin-bottom:8px">강조 키워드 / 추가 지시 <span style="font-weight:400;opacity:.6">(선택 — 모든 모드에서 프롬프트에 반영)</span></div>
+    <textarea id="gen-keywords" rows="3" placeholder="예) '광주 정신의 세계화', '청년 세대와의 연대', '특별법 제정 촉구' 등 강조하고 싶은 키워드나 문장을 자유롭게 입력하세요."
+      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;line-height:1.6"></textarea>
   </div>
 
   <div style="text-align:center;margin-bottom:24px">
@@ -1250,6 +1266,15 @@ let genInitialized = false;
 let genSpeechProfiles = [];
 const GEN_PRESETS = {};
 let genDebounce = null;
+let genMode = 'default'; // 'default'|'liberal'|'conservative'|'justice'|'free'
+
+const GEN_MODE_DESC = {
+  default:      '전체 평균 프리셋 — 슬라이더 고정 · 코퍼스 전체 평균 담론 구조 반영',
+  liberal:      '진보형 프리셋 — 슬라이더 고정 · 진보 정권 연설 평균 담론 구조 반영',
+  conservative: '보수형 프리셋 — 슬라이더 고정 · 보수 정권 연설 평균 담론 구조 반영',
+  justice:      '이행기정의 강조 프리셋 — 슬라이더 고정 · T4 정의·진상규명 비중 강화',
+  free:         '자유 설정 — 슬라이더 직접 조정 · 연구 방법론 기준 명시 프롬프트 적용'
+};
 
 function computeSpeechProfileGen(spid) {
   const sents = CORPUS.sentences.filter(s => s.spid === spid);
@@ -1320,7 +1345,7 @@ function initGenTab() {
   const top4set = new Set([...genSpeechProfiles].sort((a,b)=>b.T4-a.T4).slice(0,5).map(p=>p.spid));
   GEN_PRESETS.justice = computeGroupProfileGen(s => top4set.has(s.spid));
   GEN_PRESETS.justice.T4 = Math.min(48, GEN_PRESETS.justice.T4 + 8);
-  applyGenPreset('default');
+  applyGenPreset('default'); // starts with sliders locked
 }
 
 function getCurrentGenSliders() {
@@ -1345,21 +1370,56 @@ function setGenSlider(id, val) {
   sv.textContent = (id==='gcount') ? el.value+'문' : el.value+'%';
 }
 
+function setSliderLocked(locked) {
+  document.querySelectorAll('input[type=range].gsl').forEach(el => {
+    el.disabled = locked;
+  });
+  const panel = document.querySelector('.card .gen-section-title')?.closest('.card');
+  // add/remove locked class on slider card
+  document.querySelectorAll('#tab-t8 .card').forEach(card => {
+    if (card.querySelector('.gsl')) card.classList.toggle('gen-sliders-locked', locked);
+  });
+}
+
 function applyGenPreset(name) {
-  const p = GEN_PRESETS[name];
-  if (!p) return;
-  setGenSlider('gtype-theme',p.theme_pct); setGenSlider('gtype-context',p.context_pct);
-  setGenSlider('gtype-ritual',p.ritual_pct); setGenSlider('gtype-policy',p.policy_pct);
-  ['T1','T2','T3','T4','T5','T6','T7'].forEach(t=>setGenSlider('g'+t.toLowerCase(),p[t]));
-  setGenSlider('gpast',p.past_pct); setGenSlider('gfuture',p.future_pct);
-  setGenSlider('gpolicytheme',p.policy_theme_pct);
-  if (p.sentence_count) setGenSlider('gcount',p.sentence_count);
+  genMode = name;
+  const isFree = (name === 'free');
+
+  // Set slider values for preset modes
+  if (!isFree) {
+    const p = GEN_PRESETS[name];
+    if (!p) return;
+    setGenSlider('gtype-theme',p.theme_pct); setGenSlider('gtype-context',p.context_pct);
+    setGenSlider('gtype-ritual',p.ritual_pct); setGenSlider('gtype-policy',p.policy_pct);
+    ['T1','T2','T3','T4','T5','T6','T7'].forEach(t=>setGenSlider('g'+t.toLowerCase(),p[t]));
+    setGenSlider('gpast',p.past_pct); setGenSlider('gfuture',p.future_pct);
+    setGenSlider('gpolicytheme',p.policy_theme_pct);
+    if (p.sentence_count) setGenSlider('gcount',p.sentence_count);
+  }
+
+  // Lock/unlock sliders
+  setSliderLocked(!isFree);
   updatePresentDisplay();
-  const nameMap={liberal:'lib',conservative:'con',justice:'j',default:'def'};
-  ['lib','con','j','def'].forEach(k=>{
+
+  // Update active button highlight
+  const nameMap={liberal:'lib',conservative:'con',justice:'j',default:'def',free:'free'};
+  ['lib','con','j','def','free'].forEach(k=>{
     const el=document.getElementById('gpreset-'+k);
     if(el) el.classList.toggle('active', nameMap[name]===k);
   });
+
+  // Update mode description
+  const desc=document.getElementById('gen-mode-desc');
+  const minfo=document.getElementById('gen-mode-info');
+  if(desc) desc.textContent = GEN_MODE_DESC[name]||'';
+  if(minfo) minfo.style.borderLeftColor = isFree ? '#818cf8' : 'var(--accent)';
+
+  // Update match panel subtitle
+  const mdesc=document.getElementById('gen-match-desc');
+  if(mdesc) mdesc.textContent = isFree
+    ? '담론 조건 기반 매칭 · 문체 참고용으로만 활용 (방법론 기준 프롬프트 적용)'
+    : '상위 3개를 Few-shot 예시로 사용';
+
   updateGenMatches();
 }
 
@@ -1379,9 +1439,12 @@ function onGenSlider() {
   const ce=document.getElementById('sl-gcount'),cs=document.getElementById('sv-gcount');
   if(ce&&cs) cs.textContent=ce.value+'문';
   updatePresentDisplay();
-  ['gpreset-lib','gpreset-con','gpreset-j','gpreset-def'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.classList.remove('active');
-  });
+  // In free mode, keep 자유 설정 button active; otherwise deactivate preset buttons
+  if(genMode !== 'free') {
+    ['gpreset-lib','gpreset-con','gpreset-j','gpreset-def','gpreset-free'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.classList.remove('active');
+    });
+  }
   clearTimeout(genDebounce);
   genDebounce=setTimeout(updateGenMatches,280);
 }
@@ -1420,15 +1483,81 @@ function updateGenMatches() {
   }).join('');
 }
 
-function buildGenPrompt(top3,s) {
-  const sys=`당신은 5·18 민주화운동 기념사 전문 작성가입니다.\n코퍼스 기반 담론 분석 연구를 위해, 주어진 담론 조건에 맞는 기념사를 한국어로 창작합니다.\n\n[담론 분류 체계]\n문장 유형: THEME(담론 주제문) · CONTEXT(역사적 배경) · RITUAL(의례·형식 표현) · POLICY(정책 지향)\n주제(T1–T7): T1 사죄·반성 / T2 용서 / T3 화해·통합 / T4 정의·진상규명 / T5 치유·회복 / T6 기억·계승 / T7 역사의식`;
+function buildGenPrompt(top3,s,mode) {
+  const isFree = (mode === 'free');
+  const keywords = (document.getElementById('gen-keywords')?.value||'').trim();
+
+  // Base system prompt
+  let sys = `당신은 5·18 민주화운동 기념사 전문 작성가입니다.\n코퍼스 기반 담론 분석 연구를 위해, 주어진 담론 조건에 맞는 기념사를 한국어로 창작합니다.\n\n[담론 분류 체계]\n문장 유형: THEME(담론 주제문) · CONTEXT(역사적 배경) · RITUAL(의례·형식 표현) · POLICY(정책 지향)\n주제(T1–T7): T1 사죄·반성 / T2 용서 / T3 화해·통합 / T4 정의·진상규명 / T5 치유·회복 / T6 기억·계승 / T7 역사의식`;
+
+  if (isFree) {
+    sys += `\n\n[연구 방법론 분류 기준 — 코딩 스키마 기반]\n\n` +
+
+`■ 문장 유형 분류 (복합 기능 문장: 주기능 우선 원칙 적용)\n\n` +
+
+`▸ THEME: 발화자가 5·18의 역사적 의미·가치·사회적 함의에 관해 명시적 평가나 해석적 논평을 수행하는 문장.\n` +
+`  판별 기준: ①5·18의 역사적 의미·가치에 대한 발화자의 명시적 평가 포함 ②피해자·희생자에 대한 도덕적·감정적 관계 표명 또는 책임 인식 내포 ③5·18을 사회적·역사적 맥락 속에 위치시키거나 재해석하는 발화\n\n` +
+
+`▸ CONTEXT: 연설의 배경·발화자의 개인 경험·현재의 사회적·정치적 상황을 설명하는 문장. 5·18에 대한 직접적 가치 판단 없이 맥락을 설정하거나 청중과의 공감대를 형성하는 기능.\n` +
+`  판별 기준: ①기념식·연설의 배경·계기·상황 설명 ②발화자 개인 경험이나 5·18과의 관계 서술 ③현 시대적 과제나 사회적 상황에 대한 중립적·설명적 서술\n\n` +
+
+`▸ RITUAL: 기념식의 의례적 행위에 내재된 형식적 기능을 수행하는 문장. 참석자 호명·기념식 취지 고지·묵념 요청·폐식 조의 표명·감사 인사 등 기념의례 진행 절차와 직접 연동되는 발화.\n` +
+`  (개식부: 참석자 호명·추모 묵념·기념식 취지 선언 / 폐식부: 영령 명복 기원·감사 인사·청중에 대한 덕담)\n\n` +
+
+`▸ POLICY: 구체적인 정책 추진·입법·제도 설계·행정 조치 등에 대한 실행적 의지를 표명하는 문장.\n` +
+`  판별 기준: ①구체적 정책·제도·입법·예산 지원에 관한 선언적 발화 ②미래 지향적이며 실행 가능한 행정·입법 조치를 내용으로 함 ③단순 가치 표명이나 기원(wish)이 아닌 구체적 계획 및 추진 대상 명시\n` +
+`  ※ 5·18 자체와 직결된 정의·보상·진상규명 요구는 THEME(T4)으로 처리\n\n` +
+
+`■ T1–T7 주제 범주 (THEME 문장 한정, 주기능 우선 원칙 적용)\n\n` +
+
+`▸ T1 사죄·반성: 5·18 국가폭력에 대한 사과 또는 도덕적 반성. 국가 권력의 책임 인정, 또는 동시대인의 방관·침묵에 대한 반성적 서술.\n` +
+`  판별 기준: ①과거 국가 폭력 행위에 대한 책임 인정 명시 ②'사과','미안','부끄러움','유감','송구' 등 사죄 행위가 핵심 ③과거 자신 또는 동시대인의 방관·묵인에 대한 도덕적 반성 내포\n\n` +
+
+`▸ T2 용서: 5·18 가해자에 대한 피해자·유족의 용서, 또는 가해 측이 용서를 간청하거나 그 가능성을 탐색하는 발화.\n` +
+`  판별 기준: ①'용서','포용'이 핵심이되 초점이 화해 과정(T3)이 아닌 용서 행위 자체에 있을 것 ②피해자·유족에게 용서 요청, 용서 행위 서술, 용서의 가능성·조건 탐색\n` +
+`  ※ 용서 언급이 통합·단결 맥락으로 수렴되면 T3로 처리\n\n` +
+
+`▸ T3 화해·통합: 5·18을 둘러싼 역사적 갈등을 극복하고 사회적 통합을 지향하는 발화. 조건부 화해(진상규명·사과가 전제)와 무조건적 통합(미래 지향 단합 촉구) 두 유형.\n` +
+`  판별 기준: ①국민 통합·사회 화합·지역 갈등 극복 촉구 ②5·18을 둘러싼 갈등 극복과 사회적 연대 주제\n\n` +
+
+`▸ T4 정의·진상규명: 5·18의 진실 규명·역사 기록 바로잡기·책임자 처벌·명예 회복 등 정의 실현을 요구하거나 지지하는 발화.\n` +
+`  판별 기준: ①진상규명·사실 확인·역사 복원에 대한 요구 또는 지지가 핵심 ②5·18 가해 세력이나 역사 왜곡에 대한 명시적 비판 또는 저항 의식 포함 ③특별법·기록·재심 등 제도적·법적 정의 실현 지향\n` +
+`  ※ 구조적·제도적 정의 지향(T4)과 개인적·공동체적 회복 중심(T5)을 구별\n\n` +
+
+`▸ T5 치유·회복: 5·18 피해자·유족·공동체 전체의 상처 치유와 심리적·사회적 회복 주제. 명예 회복·정서적 위로·보상 지원·외상 후 회복.\n` +
+`  판별 기준: ①피해자·유족에 대한 위로·명예 회복·물질적·정서적 보상 주제 ②5·18이 남긴 심리적·사회적 상처의 치유 명시적 강조 ③피해 당사자에 대한 공감·연대·국가 책임 인정 포함\n\n` +
+
+`▸ T6 기억·계승: 5·18의 역사적 의미와 정신을 기억하고 후세에 전승하고자 하는 발화. 기억의 제도화(기념 장소·기념일·기념 의례·공식 기록)와 연계되는 경우 많음.\n` +
+`  판별 기준: ①5·18의 기억·정신·유산 보존 및 세대 간 전승 강조 ②기념 행사·묘역·기록 등 기억 제도화 관련 ③5·18 정신을 현재와 미래 세대에 연결·투영\n\n` +
+
+`▸ T7 역사의식: 5·18을 한국 근현대사 또는 세계 민주주의 역사의 흐름 속에 위치시키는 메타 역사적 발화. T6이 기억·계승의 실천적 차원이라면 T7은 거시적 역사 해석 수행.\n` +
+`  판별 기준: ①5·18을 한국 민주주의 발전 과정에서 역사적으로 의미화 ②세계사적 또는 비교적 맥락(민주주의 운동·인권 담론) 속에 위치시킴 ③과거-현재-미래 연속적 역사 서사 속에서 5·18 규정 또는 재정의\n\n` +
+
+`■ 시제 분류 기준 (THEME 문장 한정)\n` +
+`▸ 과거 시제: '-었-/-았-' 어미 패턴 — 역사적 사실 서술에 사용\n` +
+`▸ 미래 시제: '-겠-/-ㄹ 것이다' 어미 패턴 — 전망·약속·다짐 표현\n` +
+`▸ 현재 시제: 위 어미 패턴에 해당하지 않는 문장 — 현재적 의미 진술\n\n` +
+
+`■ 정책 지향성\n` +
+`▸ THEME 문장 중 구체적 정책·제도·입법·예산 지원 등에 관한 실행적 의지를 담은 문장의 비중. 단순 가치 표명이나 기원(wish)은 해당하지 않음.\n\n` +
+
+`⚠️ 중요: 아래 참조 연설은 문체·어휘 참고용입니다. 담론 구조(문장 유형 비율, 주제 비중, 시제 분포)는 반드시 [담론 조건]을 따르십시오. 참조 연설의 구조를 그대로 따르지 마십시오.`;
+  }
   const tsum=['T1','T2','T3','T4','T5','T6','T7'].reduce((a,t)=>a+(s[t]||0),0)||1;
   const tline=['T1','T2','T3','T4','T5','T6','T7'].map(t=>t+' '+THEME_NAMES[t]+' '+Math.round((s[t]||0)/tsum*100)+'%').join(' · ');
   const cond='[담론 조건]\n문장 구성: THEME '+s.theme_pct+'% · CONTEXT '+s.context_pct+'% · RITUAL '+s.ritual_pct+'% · POLICY '+s.policy_pct+'%\n'
     +'THEME 내 주제: '+tline+'\n시제: 과거 '+s.past_pct+'% · 현재 '+s.present_pct+'% · 미래 '+s.future_pct+'%\n'
     +'정책 지향(THEME 중): '+s.policy_theme_pct+'%\n목표 문장 수: 약 '+s.sentence_count+'문장';
-  const exs=top3.map((m,i)=>'[참조 연설 '+(i+1)+' — '+m.year+'년 '+m.president+' ('+m.regime+')]\n'+(m.text.length>2000?m.text.slice(0,2000)+'...':m.text)).join('\n\n');
-  const usr=cond+'\n\n'+exs+'\n\n위 참조 연설의 어휘·문체를 참고하되, 담론 조건에 맞는 새로운 5·18 민주화운동 기념사를 작성해주세요. 참조 연설을 복사하지 말고 창작하며, 자연스러운 흐름을 유지하세요.';
+  const exLabel = isFree ? '[문체 참조 연설 — 구조 모방 금지]' : '[참조 연설]';
+  const exs=top3.map((m,i)=>exLabel+' '+(i+1)+' — '+m.year+'년 '+m.president+' ('+m.regime+')\n'+(m.text.length>2000?m.text.slice(0,2000)+'...':m.text)).join('\n\n');
+
+  const keywordLine = keywords ? '\n\n[강조 요소]\n'+keywords : '';
+
+  const freeInstr = isFree
+    ? '⚠️ 담론 조건을 최우선으로 따르십시오. 참조 연설은 어휘·문체 참고용으로만 사용하고, 문장 유형 비율·주제 비중·시제 분포는 반드시 위 조건대로 구현하십시오.\n\n'
+    : '';
+
+  const usr=cond+keywordLine+'\n\n'+exs+'\n\n'+freeInstr+'위 참조 연설의 어휘·문체를 참고하되, 담론 조건에 맞는 새로운 5·18 민주화운동 기념사를 작성해주세요. 참조 연설을 복사하지 말고 창작하며, 자연스러운 흐름을 유지하세요.';
   return {sys,usr};
 }
 
@@ -1439,7 +1568,7 @@ async function generateSpeech() {
   const top3=[...genSpeechProfiles].map(p=>({...p,dist:genProfileDistance(p,s)}))
     .sort((a,b)=>a.dist-b.dist).slice(0,3).filter(p=>p.text);
   if(!top3.length){alert('매칭 가능한 연설이 없습니다.');return;}
-  const {sys,usr}=buildGenPrompt(top3,s);
+  const {sys,usr}=buildGenPrompt(top3,s,genMode);
   const btn=document.getElementById('gen-btn'), st=document.getElementById('gen-status');
   btn.disabled=true; btn.textContent='생성 중...'; st.textContent='Gemini에 요청 중...';
   try {
@@ -1490,7 +1619,7 @@ function copyGenPrompt() {
     .map(p=>({...p,dist:genProfileDistance(p,s)}))
     .sort((a,b)=>a.dist-b.dist).slice(0,3).filter(p=>p.text);
   if(!top3.length){alert('먼저 탭을 열어 조건을 설정해주세요.');return;}
-  const {sys,usr}=buildGenPrompt(top3,s);
+  const {sys,usr}=buildGenPrompt(top3,s,genMode);
   const full='[시스템 프롬프트]\n'+sys+'\n\n[사용자 프롬프트]\n'+usr;
   navigator.clipboard.writeText(full).then(()=>{
     const btn=event.currentTarget; btn.textContent='복사됨 ✓';
