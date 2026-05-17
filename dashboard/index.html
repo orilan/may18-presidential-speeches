@@ -291,8 +291,8 @@ button.apply-btn:hover { opacity: 0.85; }
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
       <div class="section-title" style="margin-bottom:0">문장 유형별 분포 — 정권별 비교</div>
       <div style="display:flex;gap:5px">
-        <button class="toggle-btn active" id="t3-type-n" onclick="setT3TypeMode('count')">문장 수</button>
-        <button class="toggle-btn" id="t3-type-pct" onclick="setT3TypeMode('pct')">비율 %</button>
+        <button class="toggle-btn" id="t3-type-n" onclick="setT3TypeMode('count')">문장 수</button>
+        <button class="toggle-btn active" id="t3-type-pct" onclick="setT3TypeMode('pct')">비율 %</button>
       </div>
     </div>
     <div class="chart-wrap short"><canvas id="ch3-type"></canvas></div>
@@ -361,8 +361,8 @@ button.apply-btn:hover { opacity: 0.85; }
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
     <div class="card-title" style="margin-bottom:0" id="t4-type-label">문장 유형별 분포 — A vs B</div>
     <div style="display:flex;gap:5px">
-      <button class="toggle-btn active" id="t4-type-n" onclick="setT4TypeMode('count')">문장 수</button>
-      <button class="toggle-btn" id="t4-type-pct" onclick="setT4TypeMode('pct')">비율 %</button>
+      <button class="toggle-btn" id="t4-type-n" onclick="setT4TypeMode('count')">문장 수</button>
+      <button class="toggle-btn active" id="t4-type-pct" onclick="setT4TypeMode('pct')">비율 %</button>
     </div>
   </div>
   <div class="chart-wrap short"><canvas id="c-type"></canvas></div>
@@ -1129,8 +1129,8 @@ document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', (
 let t1TenseMode = 'all';
 let t3TenseMode = 'all';
 let t4TenseMode = 'all';
-let t3TypeMode  = 'count';
-let t4TypeMode  = 'count';
+let t3TypeMode  = 'pct';
+let t4TypeMode  = 'pct';
 
 // ====================== INIT ======================
 renderTab1();
