@@ -1709,7 +1709,7 @@ function renderGenAnalysis(sentences){
       var rc=m.regime==='진보'?'lib':'con';
       var pr=Math.max(0,100-m.past_pct-m.future_pct);
       var tops=THL.map(function(t){return {t:t,v:m[t]||0};}).sort(function(a,b){return b.v-a.v;}).slice(0,2).map(function(x){return x.t+' '+THEME_NAMES[x.t]+' '+x.v+'%';}).join(' · ');
-      return '<div class="gen-match-item"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="gen-match-rank">#'+(i+1)+'</span><strong style="font-size:12px">'+m.year+'년 '+m.president+'</strong><span class="badge-'+rc+'" style="font-size:10px">'+m.regime+'</span><span style="color:var(--text-muted);font-size:10px;margin-left:auto;font-family:'DM Mono',monospace">'+m.dist.toFixed(1)+'</span></div><div style="font-size:10px;color:var(--text-muted);line-height:1.6">'+tops+'<br>과거 '+m.past_pct+'% · 현재 '+pr+'% · 미래 '+m.future_pct+'%</div></div>';
+      return '<div class="gen-match-item"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="gen-match-rank">#'+(i+1)+'</span><strong style="font-size:12px">'+m.year+'년 '+m.president+'</strong><span class="badge-'+rc+'" style="font-size:10px">'+m.regime+'</span><span style="color:var(--text-muted);font-size:10px;margin-left:auto;font-family:DM Mono,monospace">'+m.dist.toFixed(1)+'</span></div><div style="font-size:10px;color:var(--text-muted);line-height:1.6">'+tops+'<br>과거 '+m.past_pct+'% · 현재 '+pr+'% · 미래 '+m.future_pct+'%</div></div>';
     }).join('');
   }
   card.scrollIntoView({behavior:'smooth',block:'start'});
