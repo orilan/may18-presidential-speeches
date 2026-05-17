@@ -532,7 +532,7 @@ input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
         <div class="gen-slider-row"><span class="gen-slider-label" style="color:#f87171">T1 사죄·반성</span>
           <input type="range" class="gsl" id="sl-gt1" min="0" max="50" value="14" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt1">14</span></div>
-        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#fb923c">T2 명예·배상</span>
+        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#fb923c">T2 용서</span>
           <input type="range" class="gsl" id="sl-gt2" min="0" max="50" value="8" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt2">8</span></div>
         <div class="gen-slider-row"><span class="gen-slider-label" style="color:#facc15">T3 화해·통합</span>
@@ -541,13 +541,13 @@ input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
         <div class="gen-slider-row"><span class="gen-slider-label" style="color:#4ade80">T4 정의·진상규명</span>
           <input type="range" class="gsl" id="sl-gt4" min="0" max="50" value="22" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt4">22</span></div>
-        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#60a5fa">T5 민주주의 가치</span>
+        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#60a5fa">T5 치유·회복</span>
           <input type="range" class="gsl" id="sl-gt5" min="0" max="50" value="12" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt5">12</span></div>
         <div class="gen-slider-row"><span class="gen-slider-label" style="color:#818cf8">T6 기억·계승</span>
           <input type="range" class="gsl" id="sl-gt6" min="0" max="60" value="28" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt6">28</span></div>
-        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#e879f9">T7 미래지향</span>
+        <div class="gen-slider-row"><span class="gen-slider-label" style="color:#e879f9">T7 역사의식</span>
           <input type="range" class="gsl" id="sl-gt7" min="0" max="50" value="8" oninput="onGenSlider()">
           <span class="gen-slider-val" id="sv-gt7">8</span></div>
       </div>
@@ -1421,7 +1421,7 @@ function updateGenMatches() {
 }
 
 function buildGenPrompt(top3,s) {
-  const sys=`당신은 5·18 민주화운동 기념사 전문 작성가입니다.\n코퍼스 기반 담론 분석 연구를 위해, 주어진 담론 조건에 맞는 기념사를 한국어로 창작합니다.\n\n[담론 분류 체계]\n문장 유형: THEME(담론 주제문) · CONTEXT(역사적 배경) · RITUAL(의례·형식 표현) · POLICY(정책 지향)\n주제(T1–T7): T1 사죄·반성 / T2 명예·배상 / T3 화해·통합 / T4 정의·진상규명 / T5 민주주의 가치 / T6 기억·계승 / T7 미래지향`;
+  const sys=`당신은 5·18 민주화운동 기념사 전문 작성가입니다.\n코퍼스 기반 담론 분석 연구를 위해, 주어진 담론 조건에 맞는 기념사를 한국어로 창작합니다.\n\n[담론 분류 체계]\n문장 유형: THEME(담론 주제문) · CONTEXT(역사적 배경) · RITUAL(의례·형식 표현) · POLICY(정책 지향)\n주제(T1–T7): T1 사죄·반성 / T2 용서 / T3 화해·통합 / T4 정의·진상규명 / T5 치유·회복 / T6 기억·계승 / T7 역사의식`;
   const tsum=['T1','T2','T3','T4','T5','T6','T7'].reduce((a,t)=>a+(s[t]||0),0)||1;
   const tline=['T1','T2','T3','T4','T5','T6','T7'].map(t=>t+' '+THEME_NAMES[t]+' '+Math.round((s[t]||0)/tsum*100)+'%').join(' · ');
   const cond='[담론 조건]\n문장 구성: THEME '+s.theme_pct+'% · CONTEXT '+s.context_pct+'% · RITUAL '+s.ritual_pct+'% · POLICY '+s.policy_pct+'%\n'
@@ -1434,7 +1434,7 @@ function buildGenPrompt(top3,s) {
 
 async function generateSpeech() {
   const key=(document.getElementById('gen-api-key').value||'').trim();
-  if(!key){alert('OpenAI API 키를 입력해주세요.');return;}
+  if(!key){alert('Gemini API 키를 입력해주세요.');return;}
   const s=getCurrentGenSliders();
   const top3=[...genSpeechProfiles].map(p=>({...p,dist:genProfileDistance(p,s)}))
     .sort((a,b)=>a.dist-b.dist).slice(0,3).filter(p=>p.text);
@@ -1454,9 +1454,14 @@ async function generateSpeech() {
           generationConfig:{temperature:0.85,maxOutputTokens:3000}
         })
       });
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error((e.error?.message)||'HTTP '+resp.status);}
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error('API 오류 ('+resp.status+'): '+((e.error?.message)||'알 수 없는 오류'));}
     const data=await resp.json();
-    const text=data.candidates[0].content.parts[0].text.trim();
+    const cand=data.candidates?.[0];
+    if(!cand||!cand.content){
+      const reason=cand?.finishReason||'응답 없음';
+      throw new Error('생성 실패: '+reason+(reason==='SAFETY'?' (안전 필터 차단)':''));
+    }
+    const text=cand.content.parts[0].text.trim();
     document.getElementById('gen-result-card').style.display='';
     document.getElementById('gen-result-text').textContent=text;
     const u=data.usageMetadata||{};
