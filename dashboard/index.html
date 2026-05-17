@@ -1632,8 +1632,13 @@ async function generateSpeech() {
     try {
       const jsonStr=rawText.replace(/^```(?:json)?\n?/,'').replace(/\n?```$/,'');
       const parsed=JSON.parse(jsonStr);
-      speechText=(parsed.speech||rawText).replace(/\\n/g,'\n');
       parsedSentences=Array.isArray(parsed.sentences)?parsed.sentences:null;
+      if(parsedSentences&&parsedSentences.length){
+        // sentences 배열에서 재조합 → 문장마다 줄바꿈 보장
+        speechText=parsedSentences.map(function(s){return s.text||'';}).filter(Boolean).join('\n');
+      }else{
+        speechText=(parsed.speech||rawText).replace(/\\n/g,'\n');
+      }
     } catch(e){ /* plain text fallback */ }
     document.getElementById('gen-result-card').style.display='';
     document.getElementById('gen-result-text').textContent=speechText;
