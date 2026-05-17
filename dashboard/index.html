@@ -526,7 +526,7 @@ function computeTimeline() {
     const all = byYear[yr];
     const theme = themeSentences(all);
     const total = theme.length;
-    const meta = tl.find(r => r.year == yr) || {};
+    const meta = tl.find(r => (r.year ?? r[Object.keys(r)[0]]) == yr) || {};
     const row = {year: +yr, regime: meta.regime||'', speaker: meta.speaker||'', total};
     THEMES.forEach(t => {
       const cnt = theme.filter(s => s.pt === t).length;
@@ -1015,6 +1015,11 @@ function switchTab(id) {
 }
 document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
+// Tense mode state — declared before first render to avoid temporal dead zone
+let t1TenseMode = 'all';
+let t3TenseMode = 'all';
+let t4TenseMode = 'all';
+
 // ====================== INIT ======================
 renderTab1();
 
@@ -1024,10 +1029,6 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// Tense mode state (per tab)
-let t1TenseMode = 'all';
-let t3TenseMode = 'all';
-let t4TenseMode = 'all';
 function setT1TenseMode(m) {
   t1TenseMode = m;
   document.getElementById('t1-tense-all').classList.toggle('active', m==='all');
