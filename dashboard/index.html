@@ -155,10 +155,10 @@ button.apply-btn:hover { opacity: 0.85; }
 .gen-slider-val { font-size:11px; font-family:'DM Mono',monospace; width:36px; text-align:right; color:var(--text); }
 input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
 input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
-.gen-analysis-split { display:grid; grid-template-columns:260px 1fr; gap:14px; align-items:start; }
-.gen-analysis-left { display:flex; flex-direction:column; gap:10px; }
-#gen-flow-tip { position:fixed; background:rgba(15,23,42,0.97); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; font-size:11px; color:#e2e8f0; max-width:260px; pointer-events:none; z-index:9999; display:none; line-height:1.6; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
-@media(max-width:800px){ .gen-analysis-split{ grid-template-columns:1fr; } }
+.gen-analysis-row4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+#gen-flow-tip { position:fixed; background:rgba(15,23,42,0.97); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; font-size:11px; color:#e2e8f0; max-width:300px; pointer-events:none; z-index:9999; display:none; line-height:1.65; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
+@media(max-width:960px){ .gen-analysis-row4{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:560px){ .gen-analysis-row4{ grid-template-columns:1fr; } }
 .gen-analysis-inner { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:14px 16px; }
 .gen-flow-legend { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px; font-size:10px; color:var(--text-muted); }
 .gen-flow-swatch { display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:3px; vertical-align:middle; }
@@ -630,33 +630,31 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
   </div>
   <div class="card" id="gen-analysis-card" style="display:none;margin-top:20px">
     <div class="section-title" style="margin-bottom:18px">생성 연설문 담론 분석 <span id="gen-analysis-badge" style="font-size:11px;font-weight:400;opacity:.6"></span></div>
-    <div class="gen-analysis-split">
-      <!-- 좌측: ①②④⑤ -->
-      <div class="gen-analysis-left">
-        <div class="gen-analysis-inner">
-          <div class="gen-section-title" style="margin-bottom:8px">&#9312; 문장 유형 비율</div>
-          <canvas id="gen-chart-type" height="120"></canvas>
-        </div>
-        <div class="gen-analysis-inner">
-          <div class="gen-section-title" style="margin-bottom:8px">&#9313; 주제 분포 T1&#8211;T7</div>
-          <canvas id="gen-chart-theme" height="130"></canvas>
-        </div>
-        <div class="gen-analysis-inner">
-          <div class="gen-section-title" style="margin-bottom:8px">&#9315; 시제 성향 <span style="font-weight:400;opacity:.6;font-size:10px">(THEME 기준)</span></div>
-          <canvas id="gen-chart-tense" height="120"></canvas>
-        </div>
-        <div class="gen-analysis-inner">
-          <div class="gen-section-title" style="margin-bottom:6px">&#9316; 유사 연설 재매칭</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">실제 생성된 담론 구조 기준</div>
-          <div id="gen-rematching"></div>
-        </div>
+    <!-- 상단: ①②④⑤ 가로 4열 -->
+    <div class="gen-analysis-row4">
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:8px">&#9312; 문장 유형 비율</div>
+        <canvas id="gen-chart-type" height="150"></canvas>
       </div>
-      <!-- 우측: ③ 담론 흐름 -->
-      <div class="gen-analysis-inner" style="align-self:start">
-        <div class="gen-section-title" style="margin-bottom:10px">&#9314; 담론 흐름 <span style="font-weight:400;opacity:.6;font-size:10px">(마우스 오버 시 문장 내용 표시)</span></div>
-        <div class="gen-flow-legend" id="gen-flow-legend"></div>
-        <div id="gen-discourse-flow" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:8px">&#9313; 주제 분포 T1&#8211;T7</div>
+        <canvas id="gen-chart-theme" height="150"></canvas>
       </div>
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:8px">&#9315; 시제 성향 <span style="font-weight:400;opacity:.6;font-size:10px">(THEME 기준)</span></div>
+        <canvas id="gen-chart-tense" height="150"></canvas>
+      </div>
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:6px">&#9316; 유사 연설 재매칭</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">실제 생성된 담론 구조 기준</div>
+        <div id="gen-rematching"></div>
+      </div>
+    </div>
+    <!-- 하단: ③ 담론 흐름 전체 너비 -->
+    <div class="gen-analysis-inner">
+      <div class="gen-section-title" style="margin-bottom:10px">&#9314; 담론 흐름 <span style="font-weight:400;opacity:.6;font-size:10px">(마우스 오버 시 문장 내용 표시)</span></div>
+      <div class="gen-flow-legend" id="gen-flow-legend"></div>
+      <div id="gen-discourse-flow" style="display:flex;flex-wrap:wrap;gap:4px"></div>
     </div>
   </div>
 
@@ -1687,7 +1685,7 @@ function renderGenAnalysis(sentences){
 
   if(genThemeChart)genThemeChart.destroy();
   const c2=document.getElementById('gen-chart-theme');
-  if(c2)genThemeChart=new Chart(c2.getContext('2d'),{type:'bar',data:{labels:THL.map(function(t){return t+' '+THEME_NAMES[t];}),datasets:[{label:'1차',data:THL.map(function(t){return th1[t];}),backgroundColor:THL.map(function(t){return TH_C[t];})},{label:'2차',data:THL.map(function(t){return th2[t];}),backgroundColor:THL.map(function(t){return TH_C[t]+'66';})}]},options:{indexAxis:'y',plugins:{legend:{labels:{color:'#e2e8f0',font:{size:10}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'}},y:{ticks:{color:'#e2e8f0',font:{size:10}},grid:{display:false}}}}});
+  if(c2)genThemeChart=new Chart(c2.getContext('2d'),{type:'bar',data:{labels:THL.map(function(t){return t+' '+THEME_NAMES[t];}),datasets:[{label:'1차',data:THL.map(function(t){return th1[t];}),backgroundColor:THL.map(function(t){return TH_C[t];})},{label:'2차',data:THL.map(function(t){return th2[t];}),backgroundColor:THL.map(function(t){return TH_C[t]+'66';})}]},options:{indexAxis:'y',plugins:{legend:{labels:{color:'#e2e8f0',font:{size:10}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'}},y:{ticks:{color:'#e2e8f0',font:{size:9}},grid:{display:false}}}}});
 
   const leg=document.getElementById('gen-flow-legend');
   const flw=document.getElementById('gen-discourse-flow');
@@ -1703,6 +1701,8 @@ function renderGenAnalysis(sentences){
       var tipData=JSON.stringify({n:i+1,type:s.type,pt:s.primary_theme||'',st:s.secondary_theme||'',tense:s.tense||'',text:s.text||''});
       return '<div data-tip="'+tipData.replace(/"/g,'&quot;')+'" style="width:22px;height:22px;background:'+bg+'22;border:2px solid '+bc+';border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+lbl+'</div>';
     }).join('');
+    if(!flw._tipBound){
+    flw._tipBound=true;
     flw.addEventListener('mouseover',function(e){
       var d=e.target.closest('[data-tip]');
       if(!d)return;
@@ -1711,8 +1711,8 @@ function renderGenAnalysis(sentences){
         var meta='#'+info.n+' · '+info.type+(info.pt?' · <span style="color:'+TH_C[info.pt]+'">'+info.pt+'</span>':'')+(info.tense?' · '+info.tense:'')+(info.st?' · 2차:'+info.st:'');
         ttp.innerHTML='<div style="color:#94a3b8;font-size:10px;margin-bottom:5px">'+meta+'</div><div>'+info.text+'</div>';
         var r=d.getBoundingClientRect();
-        var tx=Math.min(r.left+window.scrollX,window.innerWidth-270);
-        var ty=r.bottom+window.scrollY+6;
+        var tx=Math.min(r.left,window.innerWidth-310);
+        var ty=Math.min(r.bottom+6,window.innerHeight-100);
         ttp.style.left=Math.max(0,tx)+'px';
         ttp.style.top=ty+'px';
         ttp.style.display='block';
@@ -1721,6 +1721,7 @@ function renderGenAnalysis(sentences){
     flw.addEventListener('mouseout',function(e){
       if(!flw.contains(e.relatedTarget))ttp.style.display='none';
     });
+    } // end _tipBound
   }
 
   if(genTenseChart)genTenseChart.destroy();
