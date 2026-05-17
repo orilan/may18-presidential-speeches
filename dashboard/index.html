@@ -154,6 +154,12 @@ button.apply-btn:hover { opacity: 0.85; }
 .gen-slider-label { font-size:11px; color:var(--text-muted); width:120px; flex-shrink:0; line-height:1.3; }
 .gen-slider-val { font-size:11px; font-family:'DM Mono',monospace; width:36px; text-align:right; color:var(--text); }
 input[type=range].gsl { flex:1; accent-color:var(--accent); cursor:pointer; }
+.gen-analysis-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+@media(max-width:700px){ .gen-analysis-grid2{ grid-template-columns:1fr; } }
+.gen-analysis-inner { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:14px 16px; }
+.gen-flow-legend { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px; font-size:10px; color:var(--text-muted); }
+.gen-flow-swatch { display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:3px; vertical-align:middle; }
+
 input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
 .gen-sliders-locked .gen-slider-label { opacity:0.55; }
 .gen-mode-badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; margin-left:8px; font-weight:600; }
@@ -621,6 +627,40 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
     <div id="gen-result-text"
          style="white-space:pre-wrap;line-height:1.95;font-size:14px;font-family:'Noto Serif KR',serif;color:var(--text)"></div>
   </div>
+
+  <div class="card" id="gen-analysis-card" style="display:none;margin-top:20px">
+    <div class="section-title" style="margin-bottom:18px">생성 연설문 담론 분석 <span id="gen-analysis-badge" style="font-size:11px;font-weight:400;opacity:.6"></span></div>
+
+    <div class="gen-analysis-grid2">
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:10px">① 문장 유형 비율</div>
+        <canvas id="gen-chart-type" height="180"></canvas>
+      </div>
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:10px">② 주제 분포 T1–T7</div>
+        <canvas id="gen-chart-theme" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="gen-analysis-inner" style="margin-bottom:16px">
+      <div class="gen-section-title" style="margin-bottom:10px">③ 담론 흐름 <span style="font-weight:400;opacity:.6;font-size:10px">(문장 순서 · 마우스 오버 시 문장 표시)</span></div>
+      <div class="gen-flow-legend" id="gen-flow-legend"></div>
+      <div id="gen-discourse-flow" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+    </div>
+
+    <div class="gen-analysis-grid2">
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:10px">④ 시제 성향 <span style="font-weight:400;opacity:.6;font-size:10px">(THEME 문장 기준)</span></div>
+        <canvas id="gen-chart-tense" height="180"></canvas>
+      </div>
+      <div class="gen-analysis-inner">
+        <div class="gen-section-title" style="margin-bottom:6px">⑤ 생성 결과 기반 유사 연설 재매칭</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">슬라이더 목표값이 아닌 실제 생성된 담론 구조 기준</div>
+        <div id="gen-rematching"></div>
+      </div>
+    </div>
+  </div>
+
 
 </div>
 
@@ -1559,7 +1599,11 @@ function buildGenPrompt(top3,s,mode) {
     : '';
 
   const usr=cond+keywordLine+'\n\n'+exs+'\n\n'+freeInstr+'위 참조 연설의 어휘·문체를 참고하되, 담론 조건에 맞는 새로운 5·18 민주화운동 기념사를 작성해주세요. 참조 연설을 복사하지 말고 창작하며, 자연스러운 흐름을 유지하세요.';
-  return {sys,usr};
+  const jsonInstr = '\n\n[출력 형식 — 반드시 준수]\n순수 JSON만 출력하십시오 (마크다운 코드블록 없이). 형식:\n{"speech":"연설문 전문 (개행은 \\n으로)","sentences":[{"text":"문장텍스트","type":"THEME","primary_theme":"T4","secondary_theme":null,"tense":"과거"},...]}'
+  + '\n- type: THEME|CONTEXT|RITUAL|POLICY'
+  + '\n- primary_theme/secondary_theme: T1~T7 또는 null (THEME 문장만)'
+  + '\n- tense: THEME 문장은 과거|현재|미래, 나머지는 null';
+  return {sys, usr: usr+jsonInstr};
 }
 
 async function generateSpeech() {
@@ -1590,19 +1634,146 @@ async function generateSpeech() {
     if(!data.choices?.[0]?.message?.content){
       throw new Error('생성 실패: 응답 없음 (finish_reason: '+(data.choices?.[0]?.finish_reason||'unknown')+')');
     }
-    const text=data.choices[0].message.content.trim();
+    const rawText=data.choices[0].message.content.trim();
+    let speechText=rawText, parsedSentences=null;
+    try {
+      const jsonStr=rawText.replace(/^```(?:json)?\n?/,'').replace(/\n?```$/,'');
+      const parsed=JSON.parse(jsonStr);
+      speechText=(parsed.speech||rawText).replace(/\\n/g,'\n');
+      parsedSentences=Array.isArray(parsed.sentences)?parsed.sentences:null;
+    } catch(e){ /* fallback: plain text */ }
     document.getElementById('gen-result-card').style.display='';
-    document.getElementById('gen-result-text').textContent=text;
+    document.getElementById('gen-result-text').textContent=speechText;
     const u=data.usage||{};
     st.textContent='생성 완료 · 입력 '+(u.prompt_tokens||'?')+'토큰 · 출력 '+(u.completion_tokens||'?')+'토큰';
     document.getElementById('gen-key-status').textContent='연결됨';
     document.getElementById('gen-key-status').style.color='#4ade80';
+    if(parsedSentences) renderGenAnalysis(parsedSentences);
     document.getElementById('gen-result-card').scrollIntoView({behavior:'smooth',block:'start'});
   } catch(e) {
     st.textContent='오류: '+e.message;
     document.getElementById('gen-key-status').textContent='오류';
     document.getElementById('gen-key-status').style.color='#f87171';
   } finally { btn.disabled=false; btn.textContent='기념사 생성'; }
+}
+
+
+// ── 생성 연설문 담론 분석 ─────────────────────────────────
+let genTypeChart=null, genThemeChart=null, genTenseChart=null;
+
+function renderGenAnalysis(sentences) {
+  const card=document.getElementById('gen-analysis-card');
+  if(!card||!sentences||!sentences.length) return;
+  card.style.display='';
+
+  const TYPE_C={THEME:'#818cf8',CONTEXT:'#34d399',RITUAL:'#f472b6',POLICY:'#60a5fa'};
+  const TH_C={T1:'#f87171',T2:'#fb923c',T3:'#facc15',T4:'#4ade80',T5:'#60a5fa',T6:'#818cf8',T7:'#e879f9'};
+  const THEMES_LIST=['T1','T2','T3','T4','T5','T6','T7'];
+
+  const types={THEME:0,CONTEXT:0,RITUAL:0,POLICY:0};
+  const themes1={T1:0,T2:0,T3:0,T4:0,T5:0,T6:0,T7:0};
+  const themes2={T1:0,T2:0,T3:0,T4:0,T5:0,T6:0,T7:0};
+  const tenses={과거:0,현재:0,미래:0};
+  let themeTotal=0;
+
+  sentences.forEach(s=>{
+    if(types[s.type]!==undefined) types[s.type]++;
+    if(s.type==='THEME'){
+      themeTotal++;
+      if(s.primary_theme&&themes1[s.primary_theme]!==undefined) themes1[s.primary_theme]++;
+      if(s.secondary_theme&&themes2[s.secondary_theme]!==undefined) themes2[s.secondary_theme]++;
+      if(s.tense&&tenses[s.tense]!==undefined) tenses[s.tense]++;
+    }
+  });
+  const total=sentences.length;
+  const badge=document.getElementById('gen-analysis-badge');
+  if(badge) badge.textContent='('+total+'문장 · THEME '+types.THEME+' · CONTEXT '+types.CONTEXT+' · RITUAL '+types.RITUAL+' · POLICY '+types.POLICY+')';
+
+  // ① 문장 유형 도넛
+  if(genTypeChart) genTypeChart.destroy();
+  const ctx1=document.getElementById('gen-chart-type')?.getContext('2d');
+  if(ctx1) genTypeChart=new Chart(ctx1,{
+    type:'doughnut',
+    data:{labels:['THEME','CONTEXT','RITUAL','POLICY'],
+          datasets:[{data:[types.THEME,types.CONTEXT,types.RITUAL,types.POLICY],
+                     backgroundColor:['#818cf8','#34d399','#f472b6','#60a5fa'],borderWidth:0}]},
+    options:{plugins:{legend:{labels:{color:'#e2e8f0',font:{size:11}}}},cutout:'55%'}
+  });
+
+  // ② 주제 분포 수평 바
+  if(genThemeChart) genThemeChart.destroy();
+  const ctx2=document.getElementById('gen-chart-theme')?.getContext('2d');
+  if(ctx2) genThemeChart=new Chart(ctx2,{
+    type:'bar',
+    data:{labels:THEMES_LIST.map(t=>t+' '+THEME_NAMES[t]),
+          datasets:[
+            {label:'1차',data:THEMES_LIST.map(t=>themes1[t]),backgroundColor:THEMES_LIST.map(t=>TH_C[t])},
+            {label:'2차',data:THEMES_LIST.map(t=>themes2[t]),backgroundColor:THEMES_LIST.map(t=>TH_C[t]+'66')}
+          ]},
+    options:{indexAxis:'y',plugins:{legend:{labels:{color:'#e2e8f0',font:{size:10}}}},
+             scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'}},
+                     y:{ticks:{color:'#e2e8f0',font:{size:10}},grid:{display:false}}}}
+  });
+
+  // ③ 담론 흐름
+  const legend=document.getElementById('gen-flow-legend');
+  const flowEl=document.getElementById('gen-discourse-flow');
+  if(legend) legend.innerHTML=Object.entries(TYPE_C).map(([k,v])=>
+    `<span><span class="gen-flow-swatch" style="background:${v}33;border:1.5px solid ${v}"></span>${k}</span>`
+  ).join('');
+  if(flowEl) flowEl.innerHTML=sentences.map((s,i)=>{
+    const bg=TYPE_C[s.type]||'#64748b';
+    const bc=s.primary_theme?TH_C[s.primary_theme]:'transparent';
+    const lbl=s.primary_theme?`<span style="font-size:7px;color:${TH_C[s.primary_theme]};font-weight:700;line-height:1">${s.primary_theme}</span>`:'';
+    const ti=`${i+1}. [${s.type}${s.primary_theme?'/'+s.primary_theme:''}${s.tense?'/'+s.tense:''}] ${(s.text||'').slice(0,90)}`;
+    return `<div title="${ti.replace(/"/g,'&quot;')}" style="width:22px;height:22px;background:${bg}22;border:2px solid ${bc};border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0">${lbl}</div>`;
+  }).join('');
+
+  // ④ 시제 도넛
+  if(genTenseChart) genTenseChart.destroy();
+  const ctx4=document.getElementById('gen-chart-tense')?.getContext('2d');
+  if(ctx4) genTenseChart=new Chart(ctx4,{
+    type:'doughnut',
+    data:{labels:['과거','현재','미래'],
+          datasets:[{data:[tenses.과거,tenses.현재,tenses.미래],
+                     backgroundColor:['#f87171','#94a3b8','#60a5fa'],borderWidth:0}]},
+    options:{plugins:{legend:{labels:{color:'#e2e8f0',font:{size:11}}}},cutout:'55%'}
+  });
+
+  // ⑤ 유사 연설 재매칭
+  const remEl=document.getElementById('gen-rematching');
+  if(remEl&&genSpeechProfiles.length){
+    const gp={
+      theme_pct:total?Math.round(types.THEME/total*100):0,
+      context_pct:total?Math.round(types.CONTEXT/total*100):0,
+      ritual_pct:total?Math.round(types.RITUAL/total*100):0,
+      policy_pct:total?Math.round(types.POLICY/total*100):0,
+      past_pct:themeTotal?Math.round(tenses.과거/themeTotal*100):0,
+      future_pct:themeTotal?Math.round(tenses.미래/themeTotal*100):0,
+      policy_theme_pct:0
+    };
+    THEMES_LIST.forEach(t=>{ gp[t]=themeTotal?Math.round((themes1[t]||0)/themeTotal*100):0; });
+    const top3=[...genSpeechProfiles].map(p=>({...p,dist:genProfileDistance(p,gp)}))
+      .sort((a,b)=>a.dist-b.dist).slice(0,3);
+    remEl.innerHTML=top3.map((m,i)=>{
+      const rc=m.regime==='진보'?'lib':'con';
+      const pr=Math.max(0,100-m.past_pct-m.future_pct);
+      const tops=THEMES_LIST.map(t=>({t,v:m[t]||0})).sort((a,b)=>b.v-a.v).slice(0,2)
+        .map(x=>x.t+' '+THEME_NAMES[x.t]+' '+x.v+'%').join(' · ');
+      return '<div class="gen-match-item">'+
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'+
+          '<span class="gen-match-rank">#'+(i+1)+'</span>'+
+          '<strong style="font-size:12px">'+m.year+'년 '+m.president+'</strong>'+
+          '<span class="badge-'+rc+'" style="font-size:10px">'+m.regime+'</span>'+
+          '<span style="color:var(--text-muted);font-size:10px;margin-left:auto;font-family:\'DM Mono\',monospace">'+m.dist.toFixed(1)+'</span>'+
+        '</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);line-height:1.6">'+
+          tops+'<br>과거 '+m.past_pct+'% · 현재 '+pr+'% · 미래 '+m.future_pct+'%'+
+        '</div></div>';
+    }).join('');
+  }
+
+  card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function copyGenResult() {
@@ -1748,268 +1919,4 @@ function renderPresComp() {
       datasets: [
         { label: A + ' (n=' + aTot + ')',
           data: SENT_TYPES.map(tp => t4TypeVal(aAllSents, aTot, tp)),
-          backgroundColor: hexToRgba(aColor, 0.75), borderColor: aColor, borderWidth: 1 },
-        { label: B + ' (n=' + bTot + ')',
-          data: SENT_TYPES.map(tp => t4TypeVal(bAllSents, bTot, tp)),
-          backgroundColor: hexToRgba(bColor, 0.75), borderColor: bColor, borderWidth: 1 }
-      ]
-    },
-    options: {
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { color: '#e2e8f0', font: { family: 'Noto Sans KR', size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + (t4TypeMode === 'pct' ? '%' : '문장') } } },
-      scales: {
-        x: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.08)' } },
-        y: { ticks: { color: '#8892b0', callback: v => v + (t4TypeMode === 'pct' ? '%' : '문') },
-             grid: { color: 'rgba(255,255,255,0.06)' } }
-      }
-    }
-  });
-
-  const aDataArr = THEMES.map(t => dA[t]);
-  const bDataArr = THEMES.map(t => dB[t]);
-  const labels = THEMES.map(t => t + ' ' + THEME_NAMES[t]);
-
-  // Radar
-  makeChart('c-radar', {
-    type: 'radar',
-    data: {
-      labels,
-      datasets: [
-        { label: A, data: aDataArr, fill: true,
-          backgroundColor: hexToRgba(aColor, 0.15), borderColor: aColor, pointBackgroundColor: aColor, pointRadius: 4 },
-        { label: B, data: bDataArr, fill: true,
-          backgroundColor: hexToRgba(bColor, 0.15), borderColor: bColor, pointBackgroundColor: bColor, pointRadius: 4 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#e2e8f0', font: { family: 'Noto Sans KR', size: 11 } } } },
-      scales: { r: {
-        beginAtZero: true,
-        grid: { color: 'rgba(255,255,255,0.1)' },
-        angleLines: { color: 'rgba(255,255,255,0.1)' },
-        ticks: { color: '#8892b0', font: { size: 9 }, backdropColor: 'transparent' },
-        pointLabels: { color: '#e2e8f0', font: { size: 10 } }
-      }}
-    }
-  });
-
-  // Diff bar
-  const diffData = THEMES.map((t,i) => +(aDataArr[i] - bDataArr[i]).toFixed(1));
-  const diffColors = diffData.map(v => hexToRgba(v >= 0 ? aColor : bColor, 0.75));
-  const maxAbs = Math.max(...diffData.map(Math.abs), 5);
-  makeChart('c-diff', {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: `${A} − ${B} (%p)`,
-        data: diffData,
-        backgroundColor: diffColors,
-        borderColor: diffColors,
-        borderWidth: 0
-      }]
-    },
-    options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const v = ctx.raw;
-              return ` ${v > 0 ? '+' : ''}${v}%p  (${A}=${aDataArr[ctx.dataIndex]}%, ${B}=${bDataArr[ctx.dataIndex]}%)`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          min: -maxAbs - 2, max: maxAbs + 2,
-          grid: { color: 'rgba(255,255,255,0.08)' },
-          ticks: { color: '#8892b0', callback: v => (v > 0 ? '+' : '') + v + '%' }
-        },
-        y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
-      }
-    }
-  });
-
-  // Detail cards
-  renderPresCard('presA-card', dA, aColor);
-  renderPresCard('presB-card', dB, bColor);
-
-  // Tense comparison — filtered by t4TenseMode
-  const tenseSource4 = t4TenseMode === 'all' ? CORPUS.pres_tense : CORPUS.pres_tense_policy;
-  const tA4 = tenseSource4.find(r => r.president === A);
-  const tB4 = tenseSource4.find(r => r.president === B);
-  const _t4LabelEl = document.getElementById('t4-tense-label');
-  if (_t4LabelEl) _t4LabelEl.textContent = t4TenseMode === 'all'
-    ? '시제 분포 비교 (전체 THEME)' : '시제 분포 비교 (THEME-POLICY)';
-  if (tA4 && tB4 && tA4.n > 0 && tB4.n > 0) {
-    makeChart('c-tense-comp', {
-      type: 'bar',
-      data: {
-        labels: ['과거', '현재', '미래'],
-        datasets: [
-          { label: `${A} (n=${tA4.n})`, data: ['과거','현재','미래'].map(t => tA4[t]),
-            backgroundColor: hexToRgba(aColor, 0.75) },
-          { label: `${B} (n=${tB4.n})`, data: ['과거','현재','미래'].map(t => tB4[t]),
-            backgroundColor: hexToRgba(bColor, 0.75) }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#e2e8f0', font: { family: 'Noto Sans KR', size: 11 } } } },
-        scales: {
-          x: { ticks: { color: '#e2e8f0' }, grid: { color: 'rgba(255,255,255,0.08)' } },
-          y: { ticks: { color: '#8892b0', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.08)' } }
-        }
-      }
-    });
-  } else if (document.getElementById('c-tense-comp')) {
-    const ctx = document.getElementById('c-tense-comp').getContext('2d');
-    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='13px Noto Sans KR,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('선택한 대통령 중 THEME-POLICY 문장이 없습니다.', ctx.canvas.width/2, ctx.canvas.height/2);
-  }
-}
-
-// ====================== TAB 5: 담론 네트워크 ======================
-let netRegime = 'both';
-let netWeight = 'combined';
-const netSimulations = {};
-
-function setNetRegime(r) {
-  netRegime = r;
-  document.querySelectorAll('[id^="net-btn-"]').forEach(b => {
-    b.classList.toggle('active', b.id === 'net-btn-' + r);
-  });
-  renderDiscourseNetwork();
-}
-function setNetWeight(w) {
-  netWeight = w;
-  document.querySelectorAll('[id^="wt-btn-"]').forEach(b => {
-    b.classList.toggle('active', b.id === 'wt-btn-' + w);
-  });
-  renderDiscourseNetwork();
-}
-window.setNetRegime = setNetRegime;
-window.setNetWeight = setNetWeight;
-
-function getNetEdgeWeight(edge) {
-  if (netWeight === 'combined') return edge.combined_pct;
-  if (netWeight === 'cooc')     return edge.cooc_pct;
-  if (netWeight === 'adj')      return edge.adj_pct;
-  return 0;
-}
-
-function renderDiscourseNetwork() {
-  const container = document.getElementById('network-container');
-  if (!container) return;
-  // Stop old simulations
-  Object.values(netSimulations).forEach(s => { try { s.stop(); } catch(e){} });
-  container.innerHTML = '';
-
-  const regimes = netRegime === 'both' ? ['진보', '보수'] : [netRegime];
-  const W = netRegime === 'both' ? 420 : 700;
-  const H = 420;
-  const NODE_COLORS = {T1:'#f43f5e',T2:'#fb923c',T3:'#facc15',T4:'#4ade80',T5:'#22d3ee',T6:'#818cf8',T7:'#e879f9'};
-  const NODE_LABELS = {T1:'T1\n사죄',T2:'T2\n용서',T3:'T3\n화해',T4:'T4\n정의',T5:'T5\n치유',T6:'T6\n기억',T7:'T7\n역사'};
-
-  regimes.forEach(regime => {
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'flex:1;min-width:300px;display:flex;flex-direction:column;gap:8px';
-
-    const title = document.createElement('div');
-    title.style.cssText = 'font-size:13px;font-weight:600;font-family:Noto Serif KR,serif;text-align:center;color:var(--text)';
-    const regColor = regime === '진보' ? '#3b82f6' : '#ef4444';
-    title.innerHTML = `<span style="color:${regColor}">${regime}</span> 담론 네트워크`;
-    wrapper.appendChild(title);
-
-    const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    svgEl.style.cssText = `width:100%;height:${H}px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border)`;
-    wrapper.appendChild(svgEl);
-    container.appendChild(wrapper);
-
-    const data = CORPUS.network[regime];
-    const nodes = data.nodes.map(n => ({...n}));
-    const rawEdges = data.edges.filter(e => getNetEdgeWeight(e) > 0.5);
-    const nodeById = {};
-    nodes.forEach(n => nodeById[n.id] = n);
-    const edges = rawEdges.map(e => ({...e, weight: getNetEdgeWeight(e)}));
-
-    const maxPct = Math.max(...nodes.map(n => n.pct), 1);
-    const maxW = Math.max(...edges.map(e => e.weight), 1);
-    nodes.forEach(n => { n.r = 18 + (n.pct / maxPct) * 30; });
-
-    const svg = d3.select(svgEl);
-    svg.selectAll('*').remove();
-
-    const linkGroup = svg.append('g');
-    const nodeGroup = svg.append('g');
-
-    const linkSel = linkGroup.selectAll('line').data(edges).join('line')
-      .attr('stroke', 'rgba(255,255,255,0.2)')
-      .attr('stroke-width', d => 0.5 + (d.weight / maxW) * 7.5)
-      .attr('stroke-linecap', 'round');
-
-    linkSel.append('title').text(d => `${d.source}-${d.target}\n합산: ${d.combined_pct}%  공기어: ${d.cooc_pct}%  인접: ${d.adj_pct}%`);
-
-    const nodeSel = nodeGroup.selectAll('g').data(nodes).join('g')
-      .call(d3.drag()
-        .on('start', (event,d) => { if(!event.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-        .on('drag',  (event,d) => { d.fx=event.x; d.fy=event.y; })
-        .on('end',   (event,d) => { if(!event.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
-      );
-
-    nodeSel.append('circle')
-      .attr('r', d => d.r)
-      .attr('fill', d => NODE_COLORS[d.id] + '22')
-      .attr('stroke', d => NODE_COLORS[d.id])
-      .attr('stroke-width', 2.5);
-
-    nodeSel.each(function(d) {
-      const g = d3.select(this);
-      const parts = NODE_LABELS[d.id].split('\n');
-      g.append('text').attr('text-anchor','middle').attr('dy',parts.length>1?'-4':'0')
-        .attr('font-size','10px').attr('font-weight','700').attr('fill',NODE_COLORS[d.id])
-        .attr('font-family','DM Mono, monospace').text(parts[0]);
-      if (parts[1]) {
-        g.append('text').attr('text-anchor','middle').attr('dy','8px')
-          .attr('font-size','9px').attr('fill',NODE_COLORS[d.id])
-          .attr('font-family','Noto Sans KR, sans-serif').text(parts[1]);
-      }
-      g.append('text').attr('text-anchor','middle').attr('dy',parts.length>1?'22px':'16px')
-        .attr('font-size','9px').attr('fill','rgba(255,255,255,0.55)')
-        .attr('font-family','DM Mono, monospace').text(d.pct.toFixed(1)+'%');
-    });
-
-    nodeSel.append('title').text(d => `${d.id} ${THEME_NAMES[d.id]}: ${d.pct}%`);
-
-    const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id(d=>d.id)
-        .strength(d => Math.min(d.weight/50, 1))
-        .distance(d => Math.max(80, 150 - d.weight*2)))
-      .force('charge', d3.forceManyBody().strength(-350))
-      .force('center', d3.forceCenter(W/2, H/2))
-      .force('collision', d3.forceCollide().radius(d => d.r + 12));
-
-    netSimulations[regime] = sim;
-
-    sim.on('tick', () => {
-      linkSel
-        .attr('x1', d => { const s = typeof d.source === 'object' ? d.source : nodeById[d.source]; return s ? s.x : 0; })
-        .attr('y1', d => { const s = typeof d.source === 'object' ? d.source : nodeById[d.source]; return s ? s.y : 0; })
-        .attr('x2', d => { const t = typeof d.target === 'object' ? d.target : nodeById[d.target]; return t ? t.x : 0; })
-        .attr('y2', d => { const t = typeof d.target === 'object' ? d.target : nodeById[d.target]; return t ? t.y : 0; });
-      nodeSel.attr('transform', d => `translate(${Math.max(d.r, Math.min(W-d.r, d.x||W/2))},${Math.max(d.r, Math.min(H-d.r, d.y||H/2))})`);
-    });
-  });
-}
-
-</script>
-</body>
-</html>
+          backgroundColor: hexToRgba(aColor, 
