@@ -2349,6 +2349,7 @@ function renderTab9() {
       data: { labels: [...histYears, 2026], datasets: [...histDatasets, ...star2026] },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
           y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
