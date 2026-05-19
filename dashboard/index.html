@@ -193,6 +193,7 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
   <button class="tab-btn" data-tab="t6">연설문 전문</button>
   <button class="tab-btn" data-tab="t7">예문 탐색기</button>
   <button class="tab-btn" data-tab="t8">연설문 생성기</button>
+  <button class="tab-btn" data-tab="t9" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🆕 2026 신규 연설</button>
 </div>
 
 <!-- ===================== TAB 1: 주제 분포 ===================== -->
@@ -661,6 +662,69 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
     </div>
   </div>
 
+<!-- ===================== TAB 9: 2026 신규 연설 ===================== -->
+<div class="tab-content" id="tab-t9">
+
+  <!-- 배너 -->
+  <div style="background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.35);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#fbbf24;line-height:1.7">
+    ⚠ 본 탭의 2026년 이재명 연설(2026.5.18)은 코퍼스 공식 분석 대상(28편)에 포함되지 않으며, 동일한 분석 틀을 적용한 탐색적 비교입니다.<br>
+    출처: <a href="https://www.newsis.com/view/NISX20260518_0003633913" target="_blank" style="color:#fbbf24;text-decoration:underline">뉴시스 (2026-05-18)</a>
+  </div>
+
+  <!-- 기본 정보 4열 -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+    <div class="card" style="text-align:center;padding:16px 10px">
+      <div style="font-size:28px;font-weight:700;color:#818cf8">34</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">THEME 문장</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 10px">
+      <div style="font-size:28px;font-weight:700;color:#34d399">11</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">CONTEXT 문장</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 10px">
+      <div style="font-size:28px;font-weight:700;color:#60a5fa">13</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">정책지향 문장</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 10px">
+      <div style="font-size:28px;font-weight:700;color:var(--text-muted)">T1·T2</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">부재 (0%)</div>
+    </div>
+  </div>
+
+  <!-- 레이더 + 유사도 2열 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="section-title">담론 Fingerprint <span style="font-size:11px;font-weight:400;opacity:.6">— 이재명 vs 노무현</span></div>
+      <canvas id="ch9-radar" height="260"></canvas>
+    </div>
+    <div class="card">
+      <div class="section-title">기존 대통령과의 담론 유사도 <span style="font-size:11px;font-weight:400;opacity:.6">(코사인)</span></div>
+      <canvas id="ch9-sim" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- 타임라인 오버레이 -->
+  <div class="card mb-20">
+    <div class="section-title">연도별 주제 추이 <span style="font-size:11px;font-weight:400;opacity:.6">— ★ 2026 이재명 (참고)</span></div>
+    <div class="chart-wrap tall"><canvas id="ch9-timeline"></canvas></div>
+    <p class="shrink-note">★: 2026 이재명 (탐색적 참고, 공식 코퍼스 미포함) · 실선: 코퍼스 공식 28편 기준</p>
+  </div>
+
+  <!-- 시제 비교 -->
+  <div class="card mb-20">
+    <div class="section-title">시제 분포 비교 <span style="font-size:11px;font-weight:400;opacity:.6">(THEME 문장 기준)</span></div>
+    <canvas id="ch9-tense" height="130"></canvas>
+  </div>
+
+  <!-- 연설문 전문 -->
+  <div class="card">
+    <div class="section-title">연설문 전문 <span style="font-size:11px;font-weight:400;opacity:.6">— 문장별 담론 태그</span></div>
+    <div id="t9-speech" style="max-height:540px;overflow-y:auto;padding-right:6px;line-height:1.95;font-size:13.5px;font-family:'Noto Serif KR',serif"></div>
+  </div>
+
+</div>
+
+
 </div>
 
 <script>
@@ -681,7 +745,8 @@ const CORPUS =
   "president_radar": [{"president": "김영삼", "regime": "보수", "n": 14, "T1": 0.0, "T2": 14.3, "T3": 28.6, "T4": 0.0, "T5": 7.1, "T6": 28.6, "T7": 21.4}, {"president": "김대중", "regime": "진보", "n": 77, "T1": 0.0, "T2": 0.0, "T3": 13.0, "T4": 0.0, "T5": 6.5, "T6": 40.3, "T7": 40.3}, {"president": "노무현", "regime": "진보", "n": 111, "T1": 1.8, "T2": 0.9, "T3": 16.2, "T4": 10.8, "T5": 7.2, "T6": 38.7, "T7": 24.3}, {"president": "이명박", "regime": "보수", "n": 33, "T1": 0.0, "T2": 0.0, "T3": 21.2, "T4": 0.0, "T5": 3.0, "T6": 69.7, "T7": 6.1}, {"president": "박근혜", "regime": "보수", "n": 22, "T1": 0.0, "T2": 0.0, "T3": 18.2, "T4": 0.0, "T5": 13.6, "T6": 54.5, "T7": 13.6}, {"president": "문재인", "regime": "진보", "n": 291, "T1": 4.8, "T2": 2.1, "T3": 10.0, "T4": 18.6, "T5": 6.2, "T6": 38.8, "T7": 19.6}, {"president": "윤석열", "regime": "보수", "n": 64, "T1": 0.0, "T2": 0.0, "T3": 15.6, "T4": 1.6, "T5": 17.2, "T6": 54.7, "T7": 10.9}],
   "pres_tense": [{"president": "김영삼", "regime": "보수", "n": 14, "과거": 21.4, "현재": 21.4, "미래": 57.1}, {"president": "김대중", "regime": "진보", "n": 77, "과거": 24.7, "현재": 35.1, "미래": 40.3}, {"president": "노무현", "regime": "진보", "n": 111, "과거": 30.6, "현재": 32.4, "미래": 36.9}, {"president": "이명박", "regime": "보수", "n": 33, "과거": 21.2, "현재": 39.4, "미래": 39.4}, {"president": "박근혜", "regime": "보수", "n": 22, "과거": 18.2, "현재": 40.9, "미래": 40.9}, {"president": "문재인", "regime": "진보", "n": 291, "과거": 38.5, "현재": 41.9, "미래": 19.6}, {"president": "윤석열", "regime": "보수", "n": 64, "과거": 17.2, "현재": 59.4, "미래": 23.4}],
   "pres_tense_policy": [{"president": "김영삼", "regime": "보수", "n": 0, "과거": 0, "현재": 0, "미래": 0}, {"president": "김대중", "regime": "진보", "n": 5, "과거": 0.0, "현재": 20.0, "미래": 80.0}, {"president": "노무현", "regime": "진보", "n": 10, "과거": 0.0, "현재": 20.0, "미래": 80.0}, {"president": "이명박", "regime": "보수", "n": 3, "과거": 0.0, "현재": 33.3, "미래": 66.7}, {"president": "박근혜", "regime": "보수", "n": 0, "과거": 0, "현재": 0, "미래": 0}, {"president": "문재인", "regime": "진보", "n": 41, "과거": 12.2, "현재": 39.0, "미래": 48.8}, {"president": "윤석열", "regime": "보수", "n": 7, "과거": 0.0, "현재": 14.3, "미래": 85.7}],
-  "network": {"진보": {"nodes": [{"id": "T1", "pct": 3.3}, {"id": "T2", "pct": 1.5}, {"id": "T3", "pct": 11.9}, {"id": "T4", "pct": 13.8}, {"id": "T5", "pct": 6.5}, {"id": "T6", "pct": 39.0}, {"id": "T7", "pct": 24.0}], "edges": [{"source": "T1", "target": "T2", "cooc_pct": 0.84, "adj_pct": 0.63, "combined_pct": 1.47}, {"source": "T1", "target": "T3", "cooc_pct": 0.63, "adj_pct": 1.46, "combined_pct": 2.09}, {"source": "T1", "target": "T4", "cooc_pct": 1.46, "adj_pct": 1.25, "combined_pct": 2.71}, {"source": "T1", "target": "T5", "cooc_pct": 0.63, "adj_pct": 0.21, "combined_pct": 0.84}, {"source": "T1", "target": "T6", "cooc_pct": 1.25, "adj_pct": 1.04, "combined_pct": 2.29}, {"source": "T1", "target": "T7", "cooc_pct": 0.21, "adj_pct": 0.0, "combined_pct": 0.21}, {"source": "T2", "target": "T3", "cooc_pct": 2.3, "adj_pct": 0.63, "combined_pct": 2.93}, {"source": "T2", "target": "T4", "cooc_pct": 0.42, "adj_pct": 0.42, "combined_pct": 0.84}, {"source": "T2", "target": "T5", "cooc_pct": 0.21, "adj_pct": 1.04, "combined_pct": 1.25}, {"source": "T2", "target": "T7", "cooc_pct": 0.0, "adj_pct": 0.21, "combined_pct": 0.21}, {"source": "T3", "target": "T4", "cooc_pct": 2.3, "adj_pct": 1.25, "combined_pct": 3.55}, {"source": "T3", "target": "T5", "cooc_pct": 1.88, "adj_pct": 0.84, "combined_pct": 2.72}, {"source": "T3", "target": "T6", "cooc_pct": 4.59, "adj_pct": 6.89, "combined_pct": 11.48}, {"source": "T3", "target": "T7", "cooc_pct": 1.46, "adj_pct": 2.3, "combined_pct": 3.76}, {"source": "T4", "target": "T5", "cooc_pct": 1.46, "adj_pct": 2.09, "combined_pct": 3.55}, {"source": "T4", "target": "T6", "cooc_pct": 4.59, "adj_pct": 4.59, "combined_pct": 9.18}, {"source": "T4", "target": "T7", "cooc_pct": 4.18, "adj_pct": 3.55, "combined_pct": 7.73}, {"source": "T5", "target": "T6", "cooc_pct": 4.38, "adj_pct": 3.55, "combined_pct": 7.93}, {"source": "T5", "target": "T7", "cooc_pct": 1.04, "adj_pct": 1.25, "combined_pct": 2.29}, {"source": "T6", "target": "T7", "cooc_pct": 19.21, "adj_pct": 11.06, "combined_pct": 30.27}]}, "보수": {"nodes": [{"id": "T1", "pct": 0.0}, {"id": "T2", "pct": 1.5}, {"id": "T3", "pct": 18.8}, {"id": "T4", "pct": 0.8}, {"id": "T5", "pct": 12.0}, {"id": "T6", "pct": 55.6}, {"id": "T7", "pct": 11.3}], "edges": [{"source": "T1", "target": "T6", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T2", "target": "T3", "cooc_pct": 3.76, "adj_pct": 2.26, "combined_pct": 6.02}, {"source": "T2", "target": "T6", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T2", "target": "T7", "cooc_pct": 0.0, "adj_pct": 0.75, "combined_pct": 0.75}, {"source": "T3", "target": "T4", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T3", "target": "T5", "cooc_pct": 0.75, "adj_pct": 2.26, "combined_pct": 3.01}, {"source": "T3", "target": "T6", "cooc_pct": 13.53, "adj_pct": 21.05, "combined_pct": 34.58}, {"source": "T3", "target": "T7", "cooc_pct": 2.26, "adj_pct": 3.01, "combined_pct": 5.27}, {"source": "T4", "target": "T6", "cooc_pct": 1.5, "adj_pct": 1.5, "combined_pct": 3.0}, {"source": "T4", "target": "T7", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T5", "target": "T6", "cooc_pct": 6.77, "adj_pct": 12.03, "combined_pct": 18.8}, {"source": "T5", "target": "T7", "cooc_pct": 0.75, "adj_pct": 2.26, "combined_pct": 3.01}, {"source": "T6", "target": "T7", "cooc_pct": 15.04, "adj_pct": 9.77, "combined_pct": 24.81}]}}
+  "network": {"진보": {"nodes": [{"id": "T1", "pct": 3.3}, {"id": "T2", "pct": 1.5}, {"id": "T3", "pct": 11.9}, {"id": "T4", "pct": 13.8}, {"id": "T5", "pct": 6.5}, {"id": "T6", "pct": 39.0}, {"id": "T7", "pct": 24.0}], "edges": [{"source": "T1", "target": "T2", "cooc_pct": 0.84, "adj_pct": 0.63, "combined_pct": 1.47}, {"source": "T1", "target": "T3", "cooc_pct": 0.63, "adj_pct": 1.46, "combined_pct": 2.09}, {"source": "T1", "target": "T4", "cooc_pct": 1.46, "adj_pct": 1.25, "combined_pct": 2.71}, {"source": "T1", "target": "T5", "cooc_pct": 0.63, "adj_pct": 0.21, "combined_pct": 0.84}, {"source": "T1", "target": "T6", "cooc_pct": 1.25, "adj_pct": 1.04, "combined_pct": 2.29}, {"source": "T1", "target": "T7", "cooc_pct": 0.21, "adj_pct": 0.0, "combined_pct": 0.21}, {"source": "T2", "target": "T3", "cooc_pct": 2.3, "adj_pct": 0.63, "combined_pct": 2.93}, {"source": "T2", "target": "T4", "cooc_pct": 0.42, "adj_pct": 0.42, "combined_pct": 0.84}, {"source": "T2", "target": "T5", "cooc_pct": 0.21, "adj_pct": 1.04, "combined_pct": 1.25}, {"source": "T2", "target": "T7", "cooc_pct": 0.0, "adj_pct": 0.21, "combined_pct": 0.21}, {"source": "T3", "target": "T4", "cooc_pct": 2.3, "adj_pct": 1.25, "combined_pct": 3.55}, {"source": "T3", "target": "T5", "cooc_pct": 1.88, "adj_pct": 0.84, "combined_pct": 2.72}, {"source": "T3", "target": "T6", "cooc_pct": 4.59, "adj_pct": 6.89, "combined_pct": 11.48}, {"source": "T3", "target": "T7", "cooc_pct": 1.46, "adj_pct": 2.3, "combined_pct": 3.76}, {"source": "T4", "target": "T5", "cooc_pct": 1.46, "adj_pct": 2.09, "combined_pct": 3.55}, {"source": "T4", "target": "T6", "cooc_pct": 4.59, "adj_pct": 4.59, "combined_pct": 9.18}, {"source": "T4", "target": "T7", "cooc_pct": 4.18, "adj_pct": 3.55, "combined_pct": 7.73}, {"source": "T5", "target": "T6", "cooc_pct": 4.38, "adj_pct": 3.55, "combined_pct": 7.93}, {"source": "T5", "target": "T7", "cooc_pct": 1.04, "adj_pct": 1.25, "combined_pct": 2.29}, {"source": "T6", "target": "T7", "cooc_pct": 19.21, "adj_pct": 11.06, "combined_pct": 30.27}]}, "보수": {"nodes": [{"id": "T1", "pct": 0.0}, {"id": "T2", "pct": 1.5}, {"id": "T3", "pct": 18.8}, {"id": "T4", "pct": 0.8}, {"id": "T5", "pct": 12.0}, {"id": "T6", "pct": 55.6}, {"id": "T7", "pct": 11.3}], "edges": [{"source": "T1", "target": "T6", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T2", "target": "T3", "cooc_pct": 3.76, "adj_pct": 2.26, "combined_pct": 6.02}, {"source": "T2", "target": "T6", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T2", "target": "T7", "cooc_pct": 0.0, "adj_pct": 0.75, "combined_pct": 0.75}, {"source": "T3", "target": "T4", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T3", "target": "T5", "cooc_pct": 0.75, "adj_pct": 2.26, "combined_pct": 3.01}, {"source": "T3", "target": "T6", "cooc_pct": 13.53, "adj_pct": 21.05, "combined_pct": 34.58}, {"source": "T3", "target": "T7", "cooc_pct": 2.26, "adj_pct": 3.01, "combined_pct": 5.27}, {"source": "T4", "target": "T6", "cooc_pct": 1.5, "adj_pct": 1.5, "combined_pct": 3.0}, {"source": "T4", "target": "T7", "cooc_pct": 0.75, "adj_pct": 0.0, "combined_pct": 0.75}, {"source": "T5", "target": "T6", "cooc_pct": 6.77, "adj_pct": 12.03, "combined_pct": 18.8}, {"source": "T5", "target": "T7", "cooc_pct": 0.75, "adj_pct": 2.26, "combined_pct": 3.01}, {"source": "T6", "target": "T7", "cooc_pct": 15.04, "adj_pct": 9.77, "combined_pct": 24.81}]}},
+  "speech_2026": {"meta": {"speech_id": 33, "year": 2026, "president": "이재명", "speaker": "이재명", "regime": "진보", "date": "2026-05-18", "source": "https://www.newsis.com/view/NISX20260518_0003633913", "total_sentences": 49, "theme_count": 34, "policy_count": 13, "context_count": 11, "ritual_count": 4, "note": "본 탭의 2026년 연설은 코퍼스 공식 분석 대상(28편)에 포함되지 않습니다."}, "theme_pcts": {"T1": 0.0, "T2": 0.0, "T3": 14.7, "T4": 14.7, "T5": 11.8, "T6": 29.4, "T7": 29.4}, "tense_dist": {"과거": 38.2, "현재": 20.6, "미래": 41.2}, "lib_tense_dist": {"과거": 34.4, "현재": 38.6, "미래": 26.9}, "most_similar": "노무현", "most_similar_pcts": {"T1": 1.8, "T2": 0.9, "T3": 16.2, "T4": 10.8, "T5": 7.2, "T6": 38.7, "T7": 24.3}, "similarity": [{"president": "노무현", "similarity": 0.9689}, {"president": "문재인", "similarity": 0.9403}, {"president": "김대중", "similarity": 0.935}, {"president": "김영삼", "similarity": 0.8497}, {"president": "박근혜", "similarity": 0.8364}, {"president": "윤석열", "similarity": 0.8228}, {"president": "이명박", "similarity": 0.7338}], "sentences": [{"sentence_id": "33_1", "sentence_number": 1, "text": "존경하는 국민 여러분, 광주시민과 전남도민 여러분, 그리고 귀한 자리를 함께하고 계신 5·18민주화운동 유공자와 유가족 여러분.", "type": "RITUAL", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "호명 및 인사 표현"}, {"sentence_id": "33_2", "sentence_number": 2, "text": "국가폭력의 짙은 상흔을 딛고 상생과 통합의 정신으로 자라난 마흔여섯 번째 맞이하는 오월입니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "기념식 도입부, 기념일 맥락 진술"}, {"sentence_id": "33_3", "sentence_number": 3, "text": "46년 전, 신군부 세력은 독재의 군홧발로 민주화의 봄을 무참히 짓밟으며, 국민을 지키라고 우리 국민이 준 총칼로 주권자 국민들을 무자비하게 학살했습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "신군부 국가폭력·학살 사실 서술. 역사적 배경 진술로 CONTEXT 처리"}, {"sentence_id": "33_4", "sentence_number": 4, "text": "잔혹한 만행을 은폐하기 위해 진실을 틀어막던 무도한 독재정권 때문에, 수많은 희생자들은 눈을 감지 못했고, 유가족과 피해자들은 통한의 세월을 견뎌내야 했습니다.", "type": "THEME", "primary_theme": "T4", "secondary_theme": ["T5"], "policy": false, "tense": "과거", "reasoning": "진실 은폐 및 피해자 고통 지속 명시. T4(진상규명 미이행)·T5(피해자 고통) 복합"}, {"sentence_id": "33_5", "sentence_number": 5, "text": "그러나 그 칠흑 같은 어둠 속에서도 끝내 빛을 찾아 고개를 드는 봄꽃들처럼, 더 나은 세상을 바라는 광주의 열망은 결코 꺾이지 않았습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "억압 속 저항 의지의 역사화. 광주 열망을 역사의식 차원에서 서술"}, {"sentence_id": "33_6", "sentence_number": 6, "text": "감추려 할수록 진실은 더욱 선명해졌고, 숨기려 할수록 오월 정신은 더 넓게 더 멀리 퍼져갔습니다.", "type": "THEME", "primary_theme": "T4", "secondary_theme": ["T6"], "policy": false, "tense": "과거", "reasoning": "진실 확산 과정 서술. 진상규명(T4)과 기억 계승(T6)의 연결"}, {"sentence_id": "33_7", "sentence_number": 7, "text": "그리고 마침내 오월은 진실과 정의의 편에 서고자 하는 수많은 양심들로 되살아났습니다.", "type": "THEME", "primary_theme": "T4", "secondary_theme": ["T6"], "policy": false, "tense": "과거", "reasoning": "오월이 진실·정의 편으로 복원됨. T4·T6 연결"}, {"sentence_id": "33_8", "sentence_number": 8, "text": "그렇게 다시 태어난 오월의 영령들이 2024년 12월 3일 밤, 오늘의 산 자들을 구했습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "5·18 영령과 12·3 저항의 역사적 병치. 역사의식(T7) 단독. 기억 계승 담론보다 역사적 연속성 서술에 방점"}, {"sentence_id": "33_9", "sentence_number": 9, "text": "산자가 죽은 자의 부름에 응답했고 먼저 떠난 이들이 절망 앞에 선 현재를 일으켜 세웠습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "죽은 자와 산 자의 역사적 연속성 서술. 역사의식"}, {"sentence_id": "33_10", "sentence_number": 10, "text": "분연히 떨쳐 일어나 계엄군에 맞섰던 80년 오월의 광주시민들처럼, 2024년 위대한 대한국민들도 무장한 계엄군들을 맨몸으로 막아냈습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "1980년 광주시민과 2024년 시민의 행동 병렬. 역사의식"}, {"sentence_id": "33_11", "sentence_number": 11, "text": "1980년 5월, 불의한 권력이 철수했던 그 찰나의 공간에서 광주가 온 힘을 끌어모아 꽃피웠던 '대동세상'은 2024년 12월, 그 혹독한 겨울밤에 서로의 체온으로 민주주의를 지켜내는 '빛의 혁명'으로 부활했습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": ["T3"], "policy": false, "tense": "과거", "reasoning": "대동세상(1980)→빛의 혁명(2024) 역사적 계보화. T3(공동체적 통합) 내포"}, {"sentence_id": "33_12", "sentence_number": 12, "text": "이 자리를 빌려, 민주주의를 위해 기꺼이 자신을 내던졌던 오월 민주 영령들의 고귀한 넋 앞에 머리 숙여 무한한 존경과 깊은 애도의 마음을 표합니다.", "type": "RITUAL", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "오월 영령에 대한 애도 표명"}, {"sentence_id": "33_13", "sentence_number": 13, "text": "마르지 않은 눈물로 시대의 등불을 밝혀오신 유공자와 유가족 여러분께도 진심 어린 경의와 위로의 말씀을 전합니다.", "type": "RITUAL", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "유공자·유가족에 대한 위로 표명"}, {"sentence_id": "33_14", "sentence_number": 14, "text": "참혹한 폭력 앞에서도 끝내 인간의 존엄을 지켜낸 5·18 정신의 굳건한 토대 위에서, 우리 대한민국은 민주주의와 번영의 길을 걸어올 수 있었던 것입니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "5·18 정신이 민주주의 발전의 토대라는 역사의식 진술. T7 단독; 기억 계승보다 역사적 의미화에 방점"}, {"sentence_id": "33_15", "sentence_number": 15, "text": "여러분이 계셨기에, 굴곡진 현대사의 갈림길마다 우리의 민주주의가 무너지지 않고, 다시 일어설 수 있었습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "현대사 갈림길마다 민주주의를 지탱한 5·18의 역할. 역사의식"}, {"sentence_id": "33_16", "sentence_number": 16, "text": "그 숭고한 정신과 그 희생, 헌신을 결코 잊지 않겠습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": [], "policy": false, "tense": "미래", "reasoning": "희생과 헌신을 잊지 않겠다는 기억 계승 다짐"}, {"sentence_id": "33_17", "sentence_number": 17, "text": "존경하는 국민 여러분, 12월 3일 내란은 아직 끝나지 않은 오월의 질문이었습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "12·3 내란과 5·18의 연결. 현재 정치 상황 맥락 진술"}, {"sentence_id": "33_18", "sentence_number": 18, "text": "저절로 오는 민주주의도, 저절로 지켜지는 민주주의도 없습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "현재", "reasoning": "민주주의는 저절로 오지 않는다는 역사의식 명제"}, {"sentence_id": "33_19", "sentence_number": 19, "text": "민주주의를 완성하는 힘은 오직 주권자의 간절한 열망과 실천으로부터 나온다는 것을 우리는 다시 한번 뼈저리게 현장에서 확인했습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "민주주의 완성은 주권자 실천에서 비롯됨. 역사의식"}, {"sentence_id": "33_20", "sentence_number": 20, "text": "오늘의 대한민국을 구한 80년 광주가 앞으로도 대한민국의 미래를 끊임없이 구해낼 수 있도록, 국민주권정부는 5·18을 끊임없이 기록하고 기억하며 보상하고 예우할 것입니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": ["T5"], "policy": true, "tense": "미래", "reasoning": "5·18 기록·기억·보상·예우 약속. 정책성 기억 계승(T6)·치유(T5) 복합"}, {"sentence_id": "33_21", "sentence_number": 21, "text": "오월 영령과 국민 여러분 앞에, 이를 위한 세 가지 다짐과 약속의 말씀을 드리겠습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "세 가지 다짐 발표 예고. 정책 발표 도입부"}, {"sentence_id": "33_22", "sentence_number": 22, "text": "첫째, 5·18 정신이 반드시 헌법 전문에 수록될 수 있도록 최선을 다하겠습니다.", "type": "THEME", "primary_theme": "T4", "secondary_theme": ["T6"], "policy": true, "tense": "미래", "reasoning": "5·18 정신 헌법 전문 수록 공약. 제도적 정의(T4)·기억(T6) 복합"}, {"sentence_id": "33_23", "sentence_number": 23, "text": "4·19혁명과 부마항쟁, 그리고 5·18 민주화운동은 6월 항쟁을 거쳐 촛불혁명과 빛의 혁명으로 이어졌습니다.", "type": "THEME", "primary_theme": "T7", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "4·19~빛의 혁명까지 민주화 계보 서술. 역사의식"}, {"sentence_id": "33_24", "sentence_number": 24, "text": "국민 주권을 증명한 원동력이자, 대한민국 현대사의 자부심인 5월 정신이 우리 사회에 더 단단하게 뿌리내릴 수 있도록, 5·18민주화운동의 민주 이념을 대한민국 헌법 위에 당당하게 새겨야 할 것입니다.", "type": "THEME", "primary_theme": "T4", "secondary_theme": ["T6"], "policy": true, "tense": "미래", "reasoning": "5·18 민주 이념의 헌법 명문화 요청. 제도적 진상규명·기억화"}, {"sentence_id": "33_25", "sentence_number": 25, "text": "정치적 이해관계를 초월한, 모든 정치권의 지속적인 국민과의 약속이었던 것만큼, 여야의 초당적 협력과 결단을 간곡하게 요청드립니다.", "type": "THEME", "primary_theme": "T3", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "여야 초당적 협력 요청. 정치적 통합·연대 촉구. 정책성"}, {"sentence_id": "33_26", "sentence_number": 26, "text": "광주시민과 전남도민을 넘어, 대한국민 여러분의 변함없는 지지와 성원도 당부드립니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "국민 지지 당부. 맥락적 발화"}, {"sentence_id": "33_27", "sentence_number": 27, "text": "둘째, 오늘 정식 개관하는 이곳 전남도청을 세계시민들이 함께 배우고 기억하는 K-민주주의의 살아있는 성지로 만들어내겠습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "전남도청을 K-민주주의 성지로 조성 공약. 기억 공간 제도화"}, {"sentence_id": "33_28", "sentence_number": 28, "text": "전남도청은 불법적 국가폭력에 맞선 최후의 시민 항쟁지였습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "전남도청의 국가폭력 항쟁지 의미 사실 서술. 현장 맥락 제시로 CONTEXT 처리"}, {"sentence_id": "33_29", "sentence_number": 29, "text": "벽면 곳곳에 새겨진 총탄의 흔적들이 그날의 참혹함과 시민군의 담대한 용기를 말없이 이렇게 증언하고 있지 않습니까.", "type": "THEME", "primary_theme": "T6", "secondary_theme": [], "policy": false, "tense": "현재", "reasoning": "총탄 흔적이 증언하는 역사적 기억. 기억 계승"}, {"sentence_id": "33_30", "sentence_number": 30, "text": "유네스코 세계기록 유산 등재, 한강 작가의 소설 <소년이 온다>를 통해서 오월의 광주는 이제 세계시민이 함께 기억하는 인류 보편의 가치로 거듭나고 있습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": ["T7"], "policy": false, "tense": "현재", "reasoning": "오월 광주가 인류 보편 가치로 세계화됨. T6·T7"}, {"sentence_id": "33_31", "sentence_number": 31, "text": "전남도청에 오롯이 새겨진 희생과 연대의 정신이 대한민국 공화정의 자부심이자 미래 세대의 가치로 계승될 수 있도록 정부가 적극적으로 뒷받침하겠습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "전남도청 희생·연대 정신 계승 지원 약속. 기억 제도화"}, {"sentence_id": "33_32", "sentence_number": 32, "text": "셋째, 단 한 분의 희생도 놓치지 않도록 '5.18 민주유공자 직권등록 제도'를 마련하겠습니다.", "type": "THEME", "primary_theme": "T5", "secondary_theme": ["T4"], "policy": true, "tense": "미래", "reasoning": "민주유공자 직권등록 제도 마련 공약. 치유·보상(T5)·제도적 정의(T4)"}, {"sentence_id": "33_33", "sentence_number": 33, "text": "이곳에 오기 전 들렀던 '국립 5·18민주묘지'에는 계엄군의 총탄에 쓰러진 故 양창근 열사가 잠들어 계셨습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "故 양창근 열사 사례 도입. 맥락 제시"}, {"sentence_id": "33_34", "sentence_number": 34, "text": "짓밟힌 조국의 정의에 누구보다 아파했을 그 오월의 소년은, 등록신청을 대신할 직계가족이 없다는 이유로 아직도 5·18 민주유공자로 온전히 인정받지 못하고 있습니다.", "type": "THEME", "primary_theme": "T5", "secondary_theme": [], "policy": false, "tense": "현재", "reasoning": "직계가족 없어 민주유공자 미등록 상태. 피해자 고통의 지속(T5). 제도 미비는 문장의 초점이 아닌 배경"}, {"sentence_id": "33_35", "sentence_number": 35, "text": "이제, 정부가 국가폭력 희생자 한 분 한 분의 가족이 될 것입니다.", "type": "THEME", "primary_theme": "T5", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "정부가 희생자 한 분 한 분의 가족이 되겠다는 보상·돌봄 약속. 명시적 사죄·반성 언어 없음. 치유·회복(T5) 정책 선언"}, {"sentence_id": "33_36", "sentence_number": 36, "text": "불굴의 투지로 민주주의와 조국을 지켜낸 분들이 단 한 명도 외롭게 남겨지지 않도록, 국가가 끝까지 책임을 다하겠습니다.", "type": "THEME", "primary_theme": "T5", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "단 한 명도 외롭게 남겨지지 않도록 국가가 책임을 다하겠다는 보상·예우 약속. 사죄 발화 아님. 치유·회복(T5) 정책 이행 선언"}, {"sentence_id": "33_37", "sentence_number": 37, "text": "존경하는 국민 여러분, 성장 잠재력의 약화와 불평등 심화, 국제질서의 격변, 지방소멸 등 다방면에 겹겹이 쌓인 복합위기가 우리 대한민국의 현재와 미래를 동시에 위협하고 있습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "복합위기 현황 진술. 현재 상황 맥락"}, {"sentence_id": "33_38", "sentence_number": 38, "text": "국민과 함께 격랑의 파고 한복판을 지나고 있지만, 저는 광주가 걸어온 그간의 길에서 우리 대한민국의 미래 희망을 봅니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "현재", "reasoning": "현재 위기 상황 속 미래 희망 언급. 정치적 맥락 진술로 CONTEXT 처리"}, {"sentence_id": "33_39", "sentence_number": 39, "text": "총칼을 앞세운 독재 권력의 잔인한 폭압 속에서도 80년 오월 광주는 함께 사는 기쁨을 나누었고, 금남로에는 사랑과 연대의 물결이 출렁거리지 않았습니까.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "1980년 광주 대동정신·연대 묘사. 역사적 사실 서술로 CONTEXT 처리"}, {"sentence_id": "33_40", "sentence_number": 40, "text": "외로움의 한복판 속에서도 서로의 상처를 어루만졌고 절망의 한복판에서도 서로를 부축하며, 마지막 온기를 모아 희망의 씨앗을 틔워냈습니다.", "type": "CONTEXT", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "과거", "reasoning": "서로를 어루만지고 부축하며 희망을 틔운 광주시민 모습 묘사. 역사적 장면 서술로 CONTEXT 처리"}, {"sentence_id": "33_41", "sentence_number": 41, "text": "시민들이 만들어 낸 공존과 배려, 평화의 광장에서 광주는 진정한 민주공화국의 모습을 보여주었습니다.", "type": "THEME", "primary_theme": "T3", "secondary_theme": ["T7"], "policy": false, "tense": "과거", "reasoning": "공존·배려·평화의 광장으로서 광주. 화해·통합(T3)·역사의식(T7)"}, {"sentence_id": "33_42", "sentence_number": 42, "text": "그 빛나는 5·18 정신이 역사의 굽이굽이마다 우리 대한민국을 새로운 변화와 희망의 길로 이끌었고, 이제 광주와 전남의 통합이라는 새로운 도전으로 이어지고 있습니다.", "type": "THEME", "primary_theme": "T3", "secondary_theme": ["T7"], "policy": true, "tense": "현재", "reasoning": "5·18 정신이 광주·전남 통합이라는 새로운 도전으로 이어짐. T3(화해·통합) primary. 역사의식(T7) secondary. 통합 방향 정책 지향 포함"}, {"sentence_id": "33_43", "sentence_number": 43, "text": "광주와 전남이 함께 맞잡은 손이 상생과 공존의 새로운 이정표로 우뚝 서고, 균형발전이라는 희망의 역사를 다시 써 내려갈 것으로 믿습니다.", "type": "THEME", "primary_theme": "T3", "secondary_theme": [], "policy": true, "tense": "미래", "reasoning": "광주·전남 상생·균형발전 다짐. T3(통합). 정책성"}, {"sentence_id": "33_44", "sentence_number": 44, "text": "그렇기에 오월의 기억과 5·18 정신은 과거의 유산이 아닙니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": [], "policy": false, "tense": "현재", "reasoning": "5·18 정신은 과거 유산이 아님 선언. 기억의 현재성 강조"}, {"sentence_id": "33_45", "sentence_number": 45, "text": "불의에 단호히 맞서는 용기이며, 위기를 함께 넘어서는 연대이며, 더 나은 내일을 향한 희망의 이름입니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": ["T7"], "policy": false, "tense": "현재", "reasoning": "오월의 기억이 불의에 맞서는 용기·연대·희망이라는 현재적 가치로 재정의. T6(기억의 현재화) primary, T7(역사의식) secondary"}, {"sentence_id": "33_46", "sentence_number": 46, "text": "국민주권정부는 5·18 정신을 충실하게 이어받아, 광주가 그토록 절절하게 꿈꾸었던 '국민이 주인인 나라'를 향해 담대하게 나아가겠습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": ["T7"], "policy": true, "tense": "미래", "reasoning": "5·18 정신을 이어받아 국민이 주인인 나라로 나아가겠다는 계승 선언. T6(기억 계승) primary, T7(역사의식) secondary. 정책성 포함"}, {"sentence_id": "33_47", "sentence_number": 47, "text": "그것이 바로 '산 자'의 책임을 다하고, 오월 영령들의 숭고한 희생을 헛되지 않게 하는 길이라 믿습니다.", "type": "THEME", "primary_theme": "T6", "secondary_theme": ["T7"], "policy": false, "tense": "미래", "reasoning": "산 자의 책임으로서 오월 영령의 희생을 헛되지 않게 하는 길. T6(기억 계승) primary, T7(역사의식) secondary. 책임 이행의 역사적 의미화"}, {"sentence_id": "33_48", "sentence_number": 48, "text": "오월 광주가 남긴 자유와 평등, 통합의 힘으로 지금의 위기를 이겨내고, 더 영광스럽고 더 빛나는 미래를 물려줄 수 있도록 온 힘을 다하겠습니다.", "type": "THEME", "primary_theme": "T3", "secondary_theme": ["T7"], "policy": true, "tense": "미래", "reasoning": "자유·평등·통합의 힘으로 미래를 물려주겠다는 다짐. T3·T7. 정책성"}, {"sentence_id": "33_49", "sentence_number": 49, "text": "고맙습니다.", "type": "RITUAL", "primary_theme": "", "secondary_theme": [], "policy": false, "tense": "", "reasoning": "마무리 인사"}], "full_text": "존경하는 국민 여러분, 광주시민과 전남도민 여러분, 그리고 귀한 자리를 함께하고 계신 5·18민주화운동 유공자와 유가족 여러분.\n국가폭력의 짙은 상흔을 딛고 상생과 통합의 정신으로 자라난 마흔여섯 번째 맞이하는 오월입니다.\n46년 전, 신군부 세력은 독재의 군홧발로 민주화의 봄을 무참히 짓밟으며, 국민을 지키라고 우리 국민이 준 총칼로 주권자 국민들을 무자비하게 학살했습니다.\n잔혹한 만행을 은폐하기 위해 진실을 틀어막던 무도한 독재정권 때문에, 수많은 희생자들은 눈을 감지 못했고, 유가족과 피해자들은 통한의 세월을 견뎌내야 했습니다.\n그러나 그 칠흑 같은 어둠 속에서도 끝내 빛을 찾아 고개를 드는 봄꽃들처럼, 더 나은 세상을 바라는 광주의 열망은 결코 꺾이지 않았습니다.\n감추려 할수록 진실은 더욱 선명해졌고, 숨기려 할수록 오월 정신은 더 넓게 더 멀리 퍼져갔습니다.\n그리고 마침내 오월은 진실과 정의의 편에 서고자 하는 수많은 양심들로 되살아났습니다.\n그렇게 다시 태어난 오월의 영령들이 2024년 12월 3일 밤, 오늘의 산 자들을 구했습니다.\n산자가 죽은 자의 부름에 응답했고 먼저 떠난 이들이 절망 앞에 선 현재를 일으켜 세웠습니다.\n분연히 떨쳐 일어나 계엄군에 맞섰던 80년 오월의 광주시민들처럼, 2024년 위대한 대한국민들도 무장한 계엄군들을 맨몸으로 막아냈습니다.\n1980년 5월, 불의한 권력이 철수했던 그 찰나의 공간에서 광주가 온 힘을 끌어모아 꽃피웠던 '대동세상'은 2024년 12월, 그 혹독한 겨울밤에 서로의 체온으로 민주주의를 지켜내는 '빛의 혁명'으로 부활했습니다.\n이 자리를 빌려, 민주주의를 위해 기꺼이 자신을 내던졌던 오월 민주 영령들의 고귀한 넋 앞에 머리 숙여 무한한 존경과 깊은 애도의 마음을 표합니다.\n마르지 않은 눈물로 시대의 등불을 밝혀오신 유공자와 유가족 여러분께도 진심 어린 경의와 위로의 말씀을 전합니다.\n참혹한 폭력 앞에서도 끝내 인간의 존엄을 지켜낸 5·18 정신의 굳건한 토대 위에서, 우리 대한민국은 민주주의와 번영의 길을 걸어올 수 있었던 것입니다.\n여러분이 계셨기에, 굴곡진 현대사의 갈림길마다 우리의 민주주의가 무너지지 않고, 다시 일어설 수 있었습니다.\n그 숭고한 정신과 그 희생, 헌신을 결코 잊지 않겠습니다.\n존경하는 국민 여러분, 12월 3일 내란은 아직 끝나지 않은 오월의 질문이었습니다.\n저절로 오는 민주주의도, 저절로 지켜지는 민주주의도 없습니다.\n민주주의를 완성하는 힘은 오직 주권자의 간절한 열망과 실천으로부터 나온다는 것을 우리는 다시 한번 뼈저리게 현장에서 확인했습니다.\n오늘의 대한민국을 구한 80년 광주가 앞으로도 대한민국의 미래를 끊임없이 구해낼 수 있도록, 국민주권정부는 5·18을 끊임없이 기록하고 기억하며 보상하고 예우할 것입니다.\n오월 영령과 국민 여러분 앞에, 이를 위한 세 가지 다짐과 약속의 말씀을 드리겠습니다.\n첫째, 5·18 정신이 반드시 헌법 전문에 수록될 수 있도록 최선을 다하겠습니다.\n4·19혁명과 부마항쟁, 그리고 5·18 민주화운동은 6월 항쟁을 거쳐 촛불혁명과 빛의 혁명으로 이어졌습니다.\n국민 주권을 증명한 원동력이자, 대한민국 현대사의 자부심인 5월 정신이 우리 사회에 더 단단하게 뿌리내릴 수 있도록, 5·18민주화운동의 민주 이념을 대한민국 헌법 위에 당당하게 새겨야 할 것입니다.\n정치적 이해관계를 초월한, 모든 정치권의 지속적인 국민과의 약속이었던 것만큼, 여야의 초당적 협력과 결단을 간곡하게 요청드립니다.\n광주시민과 전남도민을 넘어, 대한국민 여러분의 변함없는 지지와 성원도 당부드립니다.\n둘째, 오늘 정식 개관하는 이곳 전남도청을 세계시민들이 함께 배우고 기억하는 K-민주주의의 살아있는 성지로 만들어내겠습니다.\n전남도청은 불법적 국가폭력에 맞선 최후의 시민 항쟁지였습니다.\n벽면 곳곳에 새겨진 총탄의 흔적들이 그날의 참혹함과 시민군의 담대한 용기를 말없이 이렇게 증언하고 있지 않습니까.\n유네스코 세계기록 유산 등재, 한강 작가의 소설 <소년이 온다>를 통해서 오월의 광주는 이제 세계시민이 함께 기억하는 인류 보편의 가치로 거듭나고 있습니다.\n전남도청에 오롯이 새겨진 희생과 연대의 정신이 대한민국 공화정의 자부심이자 미래 세대의 가치로 계승될 수 있도록 정부가 적극적으로 뒷받침하겠습니다.\n셋째, 단 한 분의 희생도 놓치지 않도록 '5.18 민주유공자 직권등록 제도'를 마련하겠습니다.\n이곳에 오기 전 들렀던 '국립 5·18민주묘지'에는 계엄군의 총탄에 쓰러진 故 양창근 열사가 잠들어 계셨습니다.\n짓밟힌 조국의 정의에 누구보다 아파했을 그 오월의 소년은, 등록신청을 대신할 직계가족이 없다는 이유로 아직도 5·18 민주유공자로 온전히 인정받지 못하고 있습니다.\n이제, 정부가 국가폭력 희생자 한 분 한 분의 가족이 될 것입니다.\n불굴의 투지로 민주주의와 조국을 지켜낸 분들이 단 한 명도 외롭게 남겨지지 않도록, 국가가 끝까지 책임을 다하겠습니다.\n존경하는 국민 여러분, 성장 잠재력의 약화와 불평등 심화, 국제질서의 격변, 지방소멸 등 다방면에 겹겹이 쌓인 복합위기가 우리 대한민국의 현재와 미래를 동시에 위협하고 있습니다.\n국민과 함께 격랑의 파고 한복판을 지나고 있지만, 저는 광주가 걸어온 그간의 길에서 우리 대한민국의 미래 희망을 봅니다.\n총칼을 앞세운 독재 권력의 잔인한 폭압 속에서도 80년 오월 광주는 함께 사는 기쁨을 나누었고, 금남로에는 사랑과 연대의 물결이 출렁거리지 않았습니까.\n외로움의 한복판 속에서도 서로의 상처를 어루만졌고 절망의 한복판에서도 서로를 부축하며, 마지막 온기를 모아 희망의 씨앗을 틔워냈습니다.\n시민들이 만들어 낸 공존과 배려, 평화의 광장에서 광주는 진정한 민주공화국의 모습을 보여주었습니다.\n그 빛나는 5·18 정신이 역사의 굽이굽이마다 우리 대한민국을 새로운 변화와 희망의 길로 이끌었고, 이제 광주와 전남의 통합이라는 새로운 도전으로 이어지고 있습니다.\n광주와 전남이 함께 맞잡은 손이 상생과 공존의 새로운 이정표로 우뚝 서고, 균형발전이라는 희망의 역사를 다시 써 내려갈 것으로 믿습니다.\n그렇기에 오월의 기억과 5·18 정신은 과거의 유산이 아닙니다.\n불의에 단호히 맞서는 용기이며, 위기를 함께 넘어서는 연대이며, 더 나은 내일을 향한 희망의 이름입니다.\n국민주권정부는 5·18 정신을 충실하게 이어받아, 광주가 그토록 절절하게 꿈꾸었던 '국민이 주인인 나라'를 향해 담대하게 나아가겠습니다.\n그것이 바로 '산 자'의 책임을 다하고, 오월 영령들의 숭고한 희생을 헛되지 않게 하는 길이라 믿습니다.\n오월 광주가 남긴 자유와 평등, 통합의 힘으로 지금의 위기를 이겨내고, 더 영광스럽고 더 빛나는 미래를 물려줄 수 있도록 온 힘을 다하겠습니다.\n고맙습니다."}
 }
 ;
 // =======================================================
@@ -1784,6 +1849,7 @@ function switchTab(id) {
   if (id==='t6') renderTab4();
   if (id==='t7') { updateCat1Opts(); updateCat2Opts(); renderTab5(); }
   if (id==='t8') initGenTab();
+  if (id==='t9') renderTab9();
 }
 document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
@@ -2156,6 +2222,179 @@ function renderDiscourseNetwork() {
   });
 }
 
+
+// ===================== TAB 9: 2026 신규 연설 =====================
+let ch9Radar=null, ch9Sim=null, ch9Timeline=null, ch9Tense=null;
+
+function renderTab9() {
+  const d = CORPUS.speech_2026;
+  if (!d) return;
+  const TH9 = {T1:'#f87171',T2:'#fb923c',T3:'#facc15',T4:'#4ade80',T5:'#22d3ee',T6:'#818cf8',T7:'#e879f9'};
+  const PREG = {김영삼:'보수',김대중:'진보',노무현:'진보',이명박:'보수',박근혜:'보수',문재인:'진보',윤석열:'보수'};
+
+  // ③ Fingerprint 레이더: 이재명 vs 노무현
+  if (ch9Radar) ch9Radar.destroy();
+  const rc = document.getElementById('ch9-radar');
+  if (rc) {
+    ch9Radar = new Chart(rc.getContext('2d'), {
+      type: 'radar',
+      data: {
+        labels: THEMES.map(t => t + ' ' + THEME_NAMES[t]),
+        datasets: [
+          {
+            label: '이재명 2026',
+            data: THEMES.map(t => d.theme_pcts[t] || 0),
+            borderColor: '#818cf8', backgroundColor: '#818cf818',
+            pointBackgroundColor: '#818cf8', borderWidth: 2.5, pointRadius: 4
+          },
+          {
+            label: d.most_similar + ' (유사도 ' + d.similarity[0].similarity + ')',
+            data: THEMES.map(t => d.most_similar_pcts[t] || 0),
+            borderColor: '#34d399', backgroundColor: '#34d39915',
+            pointBackgroundColor: '#34d399', borderWidth: 1.5,
+            borderDash: [5, 3], pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0, max: 40,
+            ticks: { color: '#94a3b8', font: { size: 9 }, stepSize: 10, backdropColor: 'transparent' },
+            grid: { color: 'rgba(255,255,255,0.08)' },
+            pointLabels: { color: '#e2e8f0', font: { size: 10 } },
+            angleLines: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: { legend: { labels: { color: '#e2e8f0', font: { size: 11 }, boxWidth: 18 } } }
+      }
+    });
+  }
+
+  // ④ 유사도 수평 막대
+  if (ch9Sim) ch9Sim.destroy();
+  const sc = document.getElementById('ch9-sim');
+  if (sc) {
+    const sim = d.similarity;
+    ch9Sim = new Chart(sc.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sim.map(s => s.president + (PREG[s.president]==='진보' ? '  ●' : '  ▲')),
+        datasets: [{
+          data: sim.map(s => s.similarity),
+          backgroundColor: sim.map((s, i) => {
+            const c = PREG[s.president]==='진보' ? '#60a5fa' : '#f87171';
+            return i===0 ? c : c + '77';
+          }),
+          borderColor: sim.map((_, i) => i===0 ? '#ffffff88' : 'transparent'),
+          borderWidth: sim.map((_, i) => i===0 ? 1.5 : 0)
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: {
+          x: { min: 0.65, max: 1.0, ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => '  ' + ctx.parsed.x.toFixed(4) } }
+        }
+      }
+    });
+  }
+
+  // ⑤ 타임라인 오버레이
+  if (ch9Timeline) ch9Timeline.destroy();
+  const tc = document.getElementById('ch9-timeline');
+  if (tc) {
+    const histYears = TIMELINE.map(r => r.year);
+    const nullPad = histYears.map(() => null);
+    const histDatasets = THEMES.map(t => ({
+      label: t + ' ' + THEME_NAMES[t],
+      data: TIMELINE.map(r => r[t + '_pct']),
+      borderColor: TH9[t] + 'aa', backgroundColor: 'transparent',
+      tension: 0.3, pointRadius: 2, fill: false, borderWidth: 1.5
+    }));
+    const star2026 = THEMES.map(t => ({
+      label: '★ ' + t + ' 2026',
+      data: [...nullPad, d.theme_pcts[t] || 0],
+      borderColor: TH9[t], backgroundColor: TH9[t],
+      pointRadius: [...histYears.map(() => 0), 9],
+      pointStyle: [...histYears.map(() => 'circle'), 'star'],
+      pointBorderColor: '#fff', pointBorderWidth: 1.5,
+      fill: false, showLine: false, borderWidth: 0
+    }));
+    ch9Timeline = new Chart(tc.getContext('2d'), {
+      type: 'line',
+      data: { labels: [...histYears, 2026], datasets: [...histDatasets, ...star2026] },
+      options: {
+        responsive: true,
+        scales: {
+          x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: {
+          legend: {
+            labels: { color: '#e2e8f0', font: { size: 9 }, boxWidth: 14,
+              filter: item => !item.text.startsWith('★') }
+          }
+        }
+      }
+    });
+  }
+
+  // ⑥ 시제 비교 (grouped bar)
+  if (ch9Tense) ch9Tense.destroy();
+  const tsc = document.getElementById('ch9-tense');
+  if (tsc) {
+    const tenses = ['과거', '현재', '미래'];
+    ch9Tense = new Chart(tsc.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: tenses,
+        datasets: [
+          {
+            label: '이재명 2026',
+            data: tenses.map(t => d.tense_dist[t] || 0),
+            backgroundColor: '#818cf8aa', borderColor: '#818cf8', borderWidth: 1.5
+          },
+          {
+            label: '진보 평균',
+            data: tenses.map(t => d.lib_tense_dist[t] || 0),
+            backgroundColor: '#60a5fa44', borderColor: '#60a5fa', borderWidth: 1.5
+          }
+        ]
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { display: false } },
+          y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+        },
+        plugins: { legend: { labels: { color: '#e2e8f0', font: { size: 11 } } } }
+      }
+    });
+  }
+
+  // ⑦ 연설문 전문
+  const sp = document.getElementById('t9-speech');
+  if (sp) {
+    const TB = {
+      THEME: 'background:#818cf822;color:#818cf8;border:1px solid #818cf855',
+      CONTEXT: 'background:#34d39922;color:#34d399;border:1px solid #34d39955',
+      RITUAL: 'background:#f472b622;color:#f472b6;border:1px solid #f472b655',
+      POLICY: 'background:#60a5fa22;color:#60a5fa;border:1px solid #60a5fa44'
+    };
+    sp.innerHTML = d.sentences.map(s => {
+      const isTheme = s.type === 'THEME';
+      const bg = isTheme && s.primary_theme ? TH9[s.primary_theme] + '0f' : 'transparent';
+      const typeBadge = '<span style="display:inline-block;font-size:9px;padding:1px 6px;border-radius:3px;margin-right:4px;vertical-align:middle;font-family:monospace;' + (TB[s.type]||'') + '">' + s.type + '</span>';
+      const thBadge = isTheme && s.primary_theme
+        ? '<span style="display:inline-block;font-size:9px;padding:1px 6px;border-radius:3px;margin-right:5px;vertical-align:middle;background:' + TH9[s.primary_theme] + '22;color:' + TH9[s.primary_theme] + ';border:1px solid ' + TH9[s.primary_theme] + '55">' + s.primary_theme + '</span>' : '';
+      const polBadge = s.policy ? '<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-right:5px;vertical-align:middle;background:#60a5fa22;color:#60a5fa;border:1px solid #60a5fa44">정책</span>' : '';
+      return '<p style="margin:0 0 5px;padding:5px 8px;border-radius:5px;background:' + bg + '">' + typeBadge + thBadge + polBadge + s.text + '</p>';
+    }).join('');
+  }
+}
+
 </script>
-</body>
-</html>
