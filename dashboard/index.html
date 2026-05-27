@@ -194,7 +194,7 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
   <button class="tab-btn" data-tab="t7">예문 탐색기</button>
   <button class="tab-btn" data-tab="t8">연설문 생성기</button>
   <button class="tab-btn" data-tab="t9" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🆕 2026 신규 연설</button>
-  <button class="tab-btn" data-tab="page-about" style="display:none">📋 연구 정보</button>
+  <button class="tab-btn" data-tab="page-about">📋 연구 정보</button>
 </div>
 
 <!-- ===================== TAB 1: 주제 분포 ===================== -->
@@ -759,6 +759,9 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
 <!-- ===================== TAB: 연구 정보 ===================== -->
 <div class="tab-content" id="tab-page-about" style="padding:24px 0">
 
+  <!-- ① ~ ④ 일시 숨김 -->
+  <div style="display:none">
+
   <!-- ① 연구자 정보 -->
   <div class="card" style="max-width:560px;margin-bottom:20px">
     <div class="section-title">연구자 정보</div>
@@ -860,6 +863,8 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
       </div>
     </div>
   </div>
+
+  </div><!-- /① ~ ④ 일시 숨김 끝 -->
 
   <!-- ⑤ 리포지토리 구조 -->
   <div class="card" style="margin-bottom:20px">
