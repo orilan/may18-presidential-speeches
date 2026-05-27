@@ -1,6 +1,6 @@
-# 5·18 공식 기념 연설의 담론 구조 비교: 이행기정의 담론의 정권별 분화
+# 5·18 공식 기념연설 코퍼스: 이행기정의 담론 기반 데이터 코딩
 
-**Discourse Structure Comparison of Official May 18 Commemorative Addresses: Regime-Based Divergence in Transitional Justice Discourse**
+**Official May 18 Commemorative Address Corpus: Transitional Justice Discourse-Based Data Coding**
 
 ---
 
