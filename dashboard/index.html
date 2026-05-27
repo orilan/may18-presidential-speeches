@@ -710,8 +710,10 @@ input[type=range].gsl:disabled { opacity:0.3; cursor:not-allowed; pointer-events
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
     <div class="card">
       <div class="section-title">연도별 주제 추이 <span style="font-size:11px;font-weight:400;opacity:.6">— ★ 2026 이재명 (참고)</span></div>
-      <div class="chart-wrap"><canvas id="ch9-timeline"></canvas></div>
+      <div class="chart-wrap" style="height:160px"><canvas id="ch9-timeline"></canvas></div>
       <p class="shrink-note">★: 2026 이재명 (탐색적 참고) · 실선: 공식 28편</p>
+      <div class="section-title" style="margin-top:14px">3인 주제 프로파일 비교 <span style="font-size:11px;font-weight:400;opacity:.6">이재명 · 노무현(최유사) · 이명박(최상이)</span></div>
+      <div style="position:relative;height:165px"><canvas id="ch9-compare3"></canvas></div>
     </div>
     <div class="card">
       <div class="section-title">시제 분포 비교 <span style="font-size:11px;font-weight:400;opacity:.6">(THEME 문장 기준)</span></div>
@@ -2509,7 +2511,7 @@ function renderDiscourseNetwork() {
 
 
 // ===================== TAB 9: 2026 신규 연설 =====================
-let ch9Radar=null, ch9Sim=null, ch9Timeline=null, ch9Tense=null;
+let ch9Radar=null, ch9Sim=null, ch9Timeline=null, ch9Tense=null, ch9Compare3=null;
 
 function renderTab9() {
   const d = CORPUS.speech_2026;
@@ -2630,11 +2632,57 @@ function renderTab9() {
     });
   }
 
+  // ⑤-2 3인 주제 프로파일 비교 (이재명 / 노무현 / 이명박)
+  if (ch9Compare3) ch9Compare3.destroy();
+  const cc3 = document.getElementById('ch9-compare3');
+  if (cc3) {
+    const radar = CORPUS.president_radar;
+    const rNoh = radar.find(r => r.president === '노무현');
+    const rLee = radar.find(r => r.president === '이명박');
+    ch9Compare3 = new Chart(cc3.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: THEMES,
+        datasets: [
+          {
+            label: '이재명 2026',
+            data: THEMES.map(t => d.theme_pcts[t] || 0),
+            backgroundColor: '#fbbf2488', borderColor: '#fbbf24', borderWidth: 1.5
+          },
+          {
+            label: '노무현 (최유사)',
+            data: THEMES.map(t => rNoh ? rNoh[t] || 0 : 0),
+            backgroundColor: '#60a5fa66', borderColor: '#60a5fa', borderWidth: 1.5
+          },
+          {
+            label: '이명박 (최상이)',
+            data: THEMES.map(t => rLee ? rLee[t] || 0 : 0),
+            backgroundColor: '#f8717155', borderColor: '#f87171', borderWidth: 1.5
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#94a3b8', font: { size: 9 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { labels: { color: '#e2e8f0', font: { size: 9 }, boxWidth: 12 } } }
+      }
+    });
+  }
+
   // ⑥ 시제 비교 (grouped bar)
   if (ch9Tense) ch9Tense.destroy();
   const tsc = document.getElementById('ch9-tense');
   if (tsc) {
     const tenses = ['과거', '현재', '미래'];
+    // 보수 대통령 가중 평균 시제 계산
+    const conPres = CORPUS.pres_tense.filter(p => p.regime === '보수');
+    const conN = conPres.reduce((s, p) => s + p.n, 0);
+    const conTenseAvg = tenses.map(t =>
+      conN > 0 ? Math.round(conPres.reduce((s, p) => s + p[t] * p.n, 0) / conN * 10) / 10 : 0
+    );
     ch9Tense = new Chart(tsc.getContext('2d'), {
       type: 'bar',
       data: {
@@ -2649,6 +2697,11 @@ function renderTab9() {
             label: '진보 평균',
             data: tenses.map(t => d.lib_tense_dist[t] || 0),
             backgroundColor: '#60a5fa44', borderColor: '#60a5fa', borderWidth: 1.5
+          },
+          {
+            label: '보수 평균',
+            data: conTenseAvg,
+            backgroundColor: '#f8717144', borderColor: '#f87171', borderWidth: 1.5
           }
         ]
       },
